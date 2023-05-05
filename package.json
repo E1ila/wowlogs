@@ -1,0 +1,17 @@
+{
+  "name": "wowlogs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ansi-256-colors": "^1.1.0",
+    "cli-table": "^0.3.11",
+    "commander": "^3.0.1",
+    "moment": "^2.29.4"
+  }
+}
