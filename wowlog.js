@@ -35,15 +35,26 @@ program
    .option('--source <name>', 'Show only events made by this player')
    .option('--target <name>', 'Show only events made by this player')
    .option('--spell <name>', 'Show only this spell')
+   .option('--miss <name>', 'Show only this miss type')
    .option('--dmgheal', 'Show only entries with damage/healing')
    .option('--stand', 'Use AND condition between source and target')
-   .option('--encounter <name>', 'Show only events made during this encounter')
+   .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
+   .option('--timediff', 'Measure time difference between events')
    .action(async (logPath, options) => {
       const report = {
          files: 0,
          startTime: new Date(),
          encounters: {},
       };
+
+      if (options['encounter']) {
+         const parts = options['encounter'].split(':');
+         if (parts.length > 1) {
+            options['encounter'] = parts[0];
+            options['encounterAttempt'] = +parts[1];
+         }
+      }
+
       const func = options['func'] && require('./funcs/' + options['func']);
       if (fs.existsSync(logPath)) {
          if (fs.lstatSync(logPath).isDirectory()) {
@@ -60,6 +71,8 @@ program
          const parser = require('./parser');
          const event = parser.line(0, logPath, 9);
          console.log(JSON.stringify(event, null, 4));
+         const log = new Log("", options, report, func);
+         log.printPretty(1, event);
          return;
       }
 

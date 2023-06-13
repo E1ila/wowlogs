@@ -25,7 +25,13 @@ const CCEffectSpells = [
    8056,  // Frost Shock R1
    11286,  // Gouge R5
    19503,  // Scatter shot
-   19254,  // Touch of Weakness (not cc, but not his fault)
+   12826, // Polymorph
+   28272, // pig
+   28271, // turtle
+   2094, // blind
+   18658, // hibernate
+   6215, // fear
+   5246, // Intimidating Shout (warrior fear)
 ];
 const underMindControl = {};
 const totalFriendlyFireDamage = {};
@@ -41,6 +47,10 @@ module.exports = {
     */
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
       let result = {printPretty: false};
+
+      if (event.spell && CCEffectSpells.indexOf(event.spell.id) != -1)
+         result.printPretty = true;
+
       if (event.event == 'SPELL_AURA_APPLIED' && event.target && event.target.guid.indexOf('Player-') === 0 && event.spell && MindControlSpells.indexOf(event.spell.id) != -1) {
          underMindControl[event.target.guid] = event.spell.id;
          console.log(`${c.grayDark}${(''+lineNumber).padStart(10)}   ${event.dateStr} ${`  ${c.grayDark}${event.event}`.padEnd(40)} ${c.cyan}+++ ${c.white}${event.source.name}${c.gray} applies ${c.orange}${event.spell.name} on ${c.white}${event.target.name}${c.off}`);
@@ -50,7 +60,7 @@ module.exports = {
          console.log(`${c.grayDark}${(''+lineNumber).padStart(10)}   ${event.dateStr} ${`  ${c.grayDark}${event.event}`.padEnd(40)} ${c.cyan}--- ${c.white}${event.source.name}${c.gray}'s ${c.orange}${event.spell.name} effect removed from ${c.white}${event.target.name}${c.off}`);
       }
 
-      if (event.amount > 0 && ['SWING_DAMAGE_LANDED', 'SPELL_DAMAGE'].indexOf(event.event) !== -1 && event.source && event.target && !underMindControl[event.source.guid] && 
+      if (event.amount > 0 && ['SWING_DAMAGE_LANDED', 'SPELL_DAMAGE'].indexOf(event.event) !== -1 && event.source && event.target && underMindControl[event.source.guid] && 
           (!event.spell || CCEffectSpells.indexOf(event.spell.id) == -1) &&
           event.source.guid.indexOf('Player-') === 0 && event.target.guid.indexOf('Player-') === 0) { // mobsToCheck.indexOf(event.target.name) !== -1
          const reflect = event.source.guid == event.target.guid;
@@ -68,6 +78,19 @@ module.exports = {
                      totalFriendlyFireDamage[event.source.name].abilities[event.spell.name] += 1;
                }
       }
+
+      if (event.event == 'UNIT_DIED' && Object.values(underMindControl).length) 
+         result.printPretty = true;
+
+      if (currentEncounter.encounterId == 709) {
+         // The Prophet Skeram
+         if (event.event == 'SPELL_CAST_SUCCESS' && event.spell && event.spell.id == 26192) 
+            result.printPretty = true;      
+
+         if (event.event == 'SPELL_INTERRUPT') 
+            result.printPretty = true;      
+      }
+
       return result;
    },
 

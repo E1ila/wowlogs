@@ -88,7 +88,13 @@ module.exports = class Log {
       if (this.options['encounter'] && (!this.currentEncounter || this.currentEncounter.encounterName.toLowerCase() != this.options['encounter'].toLowerCase()))
          return;
 
+      if (this.options['encounterAttempt'] && this.report.encounters[this.currentEncounter.encounterName] != this.options['encounterAttempt'])
+         return;
+
       if (this.options['spell'] && !((event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase())))
+         return;
+
+      if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
          return;
 
       if (this.options['dmgheal'] && !(event.amount > 0))
@@ -100,12 +106,15 @@ module.exports = class Log {
       }
       let sourceMatch = !this.options['source'] || (event.source && event.source.name == this.options['source']);
       let targetMatch = !this.options['target'] || (event.target && event.target.name == this.options['target']);
-      if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
-         if (!sourceMatch || !targetMatch) // AND condition between sournce and target
-            return;
-      } else {
-         if (!sourceMatch && !targetMatch) // OR condition between sournce and target
-            return;
+      let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
+      if (!unitDied) {
+         if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
+            if (!sourceMatch || !targetMatch) // AND condition between sournce and target
+               return;
+         } else {
+            if (!sourceMatch && !targetMatch) // OR condition between sournce and target
+               return;
+         }
       }
       if (this.options['printobj'])
          console.log(`#${lineNumber} EVENT ` + JSON.stringify(event));
@@ -115,7 +124,7 @@ module.exports = class Log {
          customFuncResult = this.customFunc.processEvent(this, this.options, lineNumber, event, lastEvent, this.currentEncounter);
 
       if (this.options['print'] || customFuncResult && customFuncResult.printPretty)
-         this.printPretty(lineNumber, event, customFuncResult);
+         this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
 
    }
 
@@ -142,7 +151,7 @@ module.exports = class Log {
       return color + entity.name.split('-')[0];
    }
 
-   printPretty(lineNumber, event, customFuncResult) {
+   printPretty(lineNumber, event, customFuncResult, printTimeDiff) {
       switch (event.event) {
          case 'SPELL_AURA_REMOVED_DOSE':
          case 'SWING_DAMAGE':
@@ -155,10 +164,26 @@ module.exports = class Log {
             return;
       }
 
+      const isSpellEnergize = event.event == 'SPELL_ENERGIZE';
       let s = `${c.grayDark}${(''+lineNumber).padStart(10)}   ${event.dateStr} `;
+      if (printTimeDiff) {
+         let diff = this.lastEventTime ? (+event.date - this.lastEventTime) / 1000 : 0;
+         s += `  ${diff}`.padStart(10);
+         this.lastEventTime = +event.date;
+      }
       s += `  ${c.grayDark}${event.event}`.padEnd(40);
 
-      if (event.event === 'SPELL_AURA_APPLIED') {
+      if (event.event === 'SPELL_AURA_BROKEN') {
+         // SPELL_AURA_BROKEN
+         if (event.source && event.source.name)
+            s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}broken`;
+         if (event.spell)
+            s += ` ${c.orange}${event.spell.name}`;
+         if (event.spellName)
+            s += ` ${c.orange}${event.spellName}`;         
+         if (event.target && event.target.name)
+            s += ` ${c.gray}of ${this.getPrettyEntityName(event.target)}`;
+      } else if (event.event === 'SPELL_AURA_APPLIED') {
          // SPELL_AURA_APPLIED
          if (event.source && event.source.name)
             s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}caused`;
@@ -209,6 +234,9 @@ module.exports = class Log {
          } else {
             if (!event.target || !event.target.name)
                s += ` ${c.gray}performs`;
+            else if (isSpellEnergize) {
+               s += ` ${c.gray}gains ${c.greenDark}${event.amount} ${c.gray}energy from`;
+            }
             if (event.spell)
                s += ` ${c.orange}${event.spell.name}`;
             if (event.spellName)
@@ -227,23 +255,26 @@ module.exports = class Log {
             amountColor = c.green;
          }
          if (event.target && event.target.name) {
-            s += ` ${this.getPrettyEntityName(event.target)}`;
+            if (!isSpellEnergize || event.target.name != event.source.name)
+               s += ` ${this.getPrettyEntityName(event.target)}`;
             if (event.event == 'UNIT_DIED')
                s += ` ${c.red}died ☠️`;
          }
          if (event.eventSuffix == 'INTERRUPT' && event.extraSpellName)
             s += ` ${c.orange}${event.extraSpellName}`;
-         if (event.amount > 0) {
+         if (event.amount > 0 && !isSpellEnergize) {
             s += ` ${c.gray}for ${amountColor}${event.amount}`;
             if (event.eventSuffix != 'HEAL') {
-               if (event.absorbedSpell)
-                  s += ` ${c.gray}${event.absorbedSpell.school.toLowerCase()} damage`;
-               else if (event.spell)
-                  s += ` ${c.gray}${event.spell.school.toLowerCase()} damage`;
-               else if (event.school && event.school.length > 0)
-                  s += ` ${c.gray}${event.school.toLowerCase()} damage`;
-               else
-                  s += ` ${c.gray}melee damage`;
+               if (event.event != 'SPELL_ENERGIZE') {
+                  if (event.absorbedSpell)
+                     s += ` ${c.gray}${event.absorbedSpell.school.toLowerCase()} damage`;
+                  else if (event.spell)
+                     s += ` ${c.gray}${event.spell.school.toLowerCase()} damage`;
+                  else if (event.school && event.school.length > 0)
+                     s += ` ${c.gray}${event.school.toLowerCase()} damage`;
+                  else
+                     s += ` ${c.gray}melee damage`;
+               }
             }
             if (event.resisted > 0)
                s += ` ${c.gray}(${event.resisted} resisted)`;
