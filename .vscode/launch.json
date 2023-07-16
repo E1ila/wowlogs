@@ -13,7 +13,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/wowlog.js",
-            "args": ["/Applications/wow/_classic_era_/Logs/WoWCombatLog-061223_214857-Naxx-Finish.txt", "--encounter", "Gluth:3", "--print", "--spell", "Terrifying Roar", "--filter", "SPELL_CAST_SUCCESS"]
+            "args": ["/Applications/wow/_classic_era_/Logs/WoWCombatLog-061223_214857-Naxx-Finish.txt", "--sum", "healing"]
             // "args": ["--print", "6/12 21:52:56.816  SPELL_ENERGIZE,Player-5233-0189014E,\"Galz-Firemaw\",0x511,0x0,Player-5233-0189014E,\"Galz-Firemaw\",0x511,0x0,28813,\"Head Rush\",0x1,Player-5233-0189014E,0000000000000000,100,100,0,0,0,-1,0,0,0,3056.75,-3359.45,0,1.6914,79,5.0000,0.0000,3,100"]
         }
     ]

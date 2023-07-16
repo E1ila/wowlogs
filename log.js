@@ -97,17 +97,17 @@ module.exports = class Log {
       if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
          return;
 
-      if (this.options['dmgheal'] && !(event.amount > 0))
+      if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
          return;
 
       if (this.options['filter']) {
          if (this.options['filter'].indexOf(event.event) === -1)
             return;
       }
-      let sourceMatch = !this.options['source'] || (event.source && event.source.name == this.options['source']);
-      let targetMatch = !this.options['target'] || (event.target && event.target.name == this.options['target']);
+      let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
+      let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target']));
       let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
-      if (!unitDied) {
+      if (!unitDied || !this.options['encounter']) {
          if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
             if (!sourceMatch || !targetMatch) // AND condition between sournce and target
                return;
@@ -126,14 +126,41 @@ module.exports = class Log {
       if (this.options['print'] || customFuncResult && customFuncResult.printPretty)
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
 
+      const sumFields = this.options['sum'];
+      if (sumFields) {
+         for (let sumField of sumFields) {
+            switch (sumField) {
+               case 'damage':
+                  if (event.amount > 0 && ['SPELL_DAMAGE', 'SWING_DAMAGE_LANDED', 'SPELL_PERIODIC_DAMAGE'].indexOf(event.event) != -1) 
+                     this.sumField(sumField, event.source, event.amount);
+                  break;
+               case 'dmgfr':
+                  if (event.amount > 0 && ['SPELL_DAMAGE', 'SWING_DAMAGE_LANDED', 'SPELL_PERIODIC_DAMAGE'].indexOf(event.event) != -1 && event.source.guid.indexOf('Player-') === 0) 
+                     this.sumField(sumField, event.source, event.amount);
+                  break;   
+               case 'healing':
+                  if (sumField === 'healing' && event.amount > 0 && 'SPELL_HEAL' === event.event) 
+                     this.sumField(sumField, event.source, event.amount);
+                  break;
+            }
+         }
+      } 
+   }
+
+   sumField(field, source, amount) {
+      if (!this.result.sum[field][source.guid])
+         this.result.sum[field][source.guid] = {name: source.name, amount: 0};
+      this.result.sum[field][source.guid].amount += amount;
+      this.result.sum[field].Total += amount;
    }
 
    initResult() {
       this.result = {};
       if (this.options['sum'].length) {
+         this.options['sum'].forEach(field => field.toLowerCase());
          this.result.sum = {};
          for (let field of this.options['sum']) {
-            this.result.sum[field] = 0;
+            this.result.sum[field] = {Total: 0};
          }
       }
    }
@@ -297,5 +324,23 @@ module.exports = class Log {
    finish() {
       if (this.customFunc)
          this.customFunc.finishFile(this, this.options);
+
+      if (this.result.sum) {
+         for (let field in this.result.sum) {
+            console.log(`${field.toUpperCase()}:`)
+            const outputPerSource = this.result.sum[field];
+            let arr = [];
+            for (let guid in outputPerSource) {
+               const output = outputPerSource[guid];
+               if (output >= 0)
+                  arr.push([guid, outputPerSource[guid]]);
+               else 
+                  arr.push([output.name, output.amount]);
+            }
+            arr = arr.sort((a, b) => b[1]-a[1]);
+            for (let pair of arr)
+               console.log(`  ${pair[1].toLocaleString('en').padStart(12)}  ${pair[0]}`);
+         }
+      }
    }
 }

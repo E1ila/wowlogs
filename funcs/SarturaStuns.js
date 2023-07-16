@@ -36,6 +36,10 @@ module.exports = {
          return result;
 
       if (event.target && event.target.name === currentEncounter.encounterName) {
+         if (event.source.name === currentEncounter.encounterName && event.spell.id === 26083) {
+            // whirlwind
+            result.printPretty = true;
+         }
          if (event.event === "SPELL_CAST_SUCCESS" && StunSpells[event.spell.id]) {
             result.printPretty = true;
          }

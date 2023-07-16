@@ -39,6 +39,7 @@ program
    .option('--dmgheal', 'Show only entries with damage/healing')
    .option('--stand', 'Use AND condition between source and target')
    .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
+   .option('--encounters', 'Print detected encounters')
    .option('--timediff', 'Measure time difference between events')
    .action(async (logPath, options) => {
       const report = {
@@ -81,10 +82,11 @@ program
 
       console.log(`\n===================================================`);
       console.log(` Finished processing ${report.files} files, took ${took} seconds`);
-      console.log(` Encounters:`);
-      console.log(encounters.map(row => `    • ${row[1]} ${row[0]}`).join("\n"));
-      console.log(`===================================================\n`);
 
+      if (options['encounters']) {
+         console.log(` Encounters:`);
+         console.log(encounters.map(row => `    • ${row[1]} ${row[0]}`).join("\n"));
+      }
       func && func.finishReport(report, options);
    });
 

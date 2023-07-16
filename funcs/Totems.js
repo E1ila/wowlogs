@@ -27,6 +27,9 @@ const Totems = {
    8184: "FR R1",
    25908: "Tranquil Air",
    8177: "Grounding",
+   10479: "FrR R3",
+   10478: "FrR R2",
+   8181: "FrR R1",
 };
 const totalTotems = {};
 
