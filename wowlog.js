@@ -28,7 +28,7 @@ program
    .option('--print', 'Print pretty parsed events')
    .option('--func <functionName>', 'Print parsed events')
    .option('--filter <CSV>', 'Process only these events, CSV', v => v.split(","), undefined)
-   .option('--ignore-ver-err', 'Ignore combat log version errors')
+   .option('--force', 'Force treating file as log version 9')
    .option('--sum <field>', 'Aggregate one of: ' + Object.values(consts.fields).join(', '), collect, [])
    .option('--ext <extension>', 'Process only files with this extension')
    .option('--params <param>', 'Extra parameters passed to custom function', collect, [])
@@ -56,9 +56,13 @@ program
          }
       }
 
+      if (options['force'])
+         options['ignoreVerErr'] = true;
+
       const func = options['func'] && require('./funcs/' + options['func']);
       if (fs.existsSync(logPath)) {
          if (fs.lstatSync(logPath).isDirectory()) {
+            options['dirscan'] = true;
             const files = fs.readdirSync(logPath);
             for (let file of files) {
                if (options['ext'] && !file.endsWith('.' + options['ext']))

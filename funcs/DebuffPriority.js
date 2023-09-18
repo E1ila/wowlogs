@@ -70,6 +70,8 @@ module.exports = {
             maxDebuffs: {},
          }
       }
+      if (!event.target) 
+         return;
       const mobGuid = event.target.guid;
       if (!mobGuid.startsWith('Creature') || log._pushedBuffs.ignore[mobGuid])
          return;

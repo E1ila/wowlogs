@@ -30,6 +30,8 @@ const Totems = {
    10479: "FrR R3",
    10478: "FrR R2",
    8181: "FrR R1",
+   8166: "Poison",
+   8170: "Disease",
 };
 const totalTotems = {};
 

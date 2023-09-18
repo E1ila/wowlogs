@@ -237,7 +237,7 @@ parse.line = (lineNumber, line, version) => {
       case 'HEAL':
          o.amount = parseInt(l.mshift(16)) // the damage player will see on his UI
          o.baseAmount = parseInt(l.shift()) // damage before crit and before absorbtion
-         o.overheal = l.shift() === '1'
+         o.overheal = parseInt(l.shift())
          o.absorbed = l.shift() === '1'
          o.critical = l.shift() === '1'
          break

@@ -78,42 +78,50 @@ module.exports = class Log {
    }
 
    processEvent(lineNumber, event, lastEvent) {
+      let encounterStartOrStop = false;
+      let endedEncounter = null;
       if (event.event === 'ENCOUNTER_START') {
          this.report.encounters[event.encounterName] = (this.report.encounters[event.encounterName] || 0) + 1;
          this.currentEncounter = event;
+         encounterStartOrStop = true;
       } else if (event.event === 'ENCOUNTER_END') {
+         endedEncounter = this.currentEncounter;
          this.currentEncounter = null;
+         encounterStartOrStop = true;
       }
 
-      if (this.options['encounter'] && (!this.currentEncounter || this.currentEncounter.encounterName.toLowerCase() != this.options['encounter'].toLowerCase()))
+      if (this.options['encounter'] && (!(this.currentEncounter || endedEncounter) || (this.currentEncounter || endedEncounter).encounterName.toLowerCase() != this.options['encounter'].toLowerCase()))
          return;
 
-      if (this.options['encounterAttempt'] && this.report.encounters[this.currentEncounter.encounterName] != this.options['encounterAttempt'])
+      if (this.options['encounterAttempt'] && this.currentEncounter && this.report.encounters[this.currentEncounter.encounterName] != this.options['encounterAttempt'])
          return;
 
-      if (this.options['spell'] && !((event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase())))
-         return;
-
-      if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
-         return;
-
-      if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
-         return;
-
-      if (this.options['filter']) {
-         if (this.options['filter'].indexOf(event.event) === -1)
+      if (!encounterStartOrStop) {
+         // use filters for rows other than encounter start/stop
+         if (this.options['spell'] && !((event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase())))
             return;
-      }
-      let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
-      let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target']));
-      let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
-      if (!unitDied || !this.options['encounter']) {
-         if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
-            if (!sourceMatch || !targetMatch) // AND condition between sournce and target
+
+         if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
+            return;
+
+         if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
+            return;
+
+         if (this.options['filter']) {
+            if (this.options['filter'].indexOf(event.event) === -1)
                return;
-         } else {
-            if (!sourceMatch && !targetMatch) // OR condition between sournce and target
-               return;
+         }
+         let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
+         let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target']));
+         let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
+         if (!unitDied || !this.options['encounter']) {
+            if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
+               if (!sourceMatch || !targetMatch) // AND condition between sournce and target
+                  return;
+            } else {
+               if (!sourceMatch && !targetMatch) // OR condition between sournce and target
+                  return;
+            }
          }
       }
       if (this.options['printobj'])
@@ -123,7 +131,7 @@ module.exports = class Log {
       if (this.customFunc)
          customFuncResult = this.customFunc.processEvent(this, this.options, lineNumber, event, lastEvent, this.currentEncounter);
 
-      if (this.options['print'] || customFuncResult && customFuncResult.printPretty)
+      if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
 
       const sumFields = this.options['sum'];
@@ -142,6 +150,9 @@ module.exports = class Log {
                   if (sumField === 'healing' && event.amount > 0 && 'SPELL_HEAL' === event.event) 
                      this.sumField(sumField, event.source, event.amount);
                   break;
+               case 'count':
+                  this.sumField(sumField, event.source, 1);
+                  break;   
             }
          }
       } 
@@ -149,9 +160,10 @@ module.exports = class Log {
 
    sumField(field, source, amount) {
       if (!this.result.sum[field][source.guid])
-         this.result.sum[field][source.guid] = {name: source.name, amount: 0};
-      this.result.sum[field][source.guid].amount += amount;
-      this.result.sum[field].Total += amount;
+         this.result.sum[field][source.guid] = {name: source.name, amount: 0, hits: 0};
+         this.result.sum[field][source.guid].amount += amount;
+         this.result.sum[field][source.guid].hits++;
+         this.result.sum[field].Total += amount;
    }
 
    initResult() {
@@ -182,7 +194,7 @@ module.exports = class Log {
       switch (event.event) {
          case 'SPELL_AURA_REMOVED_DOSE':
          case 'SWING_DAMAGE':
-         case 'SPELL_EXTRA_ATTACKS':
+         // case 'SPELL_EXTRA_ATTACKS':
          case 'SPELL_AURA_APPLIED_DOSE':
          case 'SPELL_AURA_REFRESH':
          case 'SPELL_CAST_START':
@@ -200,7 +212,20 @@ module.exports = class Log {
       }
       s += `  ${c.grayDark}${event.event}`.padEnd(40);
 
-      if (event.event === 'SPELL_AURA_BROKEN') {
+      if (event.event === 'ENCOUNTER_START') {
+         // s += `🟩 ------- Encounter Start: ${c.gray}${event.encounterName}${c.grayDark} -------`;
+         // console.log(s + c.off);
+         return;
+      } else if (event.event === 'ENCOUNTER_END') {
+         // s += `🟥 ------- Encounter End: ${c.gray}${event.encounterName}${c.grayDark} -------`;
+         // console.log(s + c.off);
+         return;
+      }
+
+      if (event.event === 'SPELL_EXTRA_ATTACKS') {
+         if (event.source && event.source.name)
+            s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}gained ${c.grayDark}extra attack from ${c.gray}${event.spell.name}`;
+      } else if (event.event === 'SPELL_AURA_BROKEN') {
          // SPELL_AURA_BROKEN
          if (event.source && event.source.name)
             s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}broken`;
@@ -231,6 +256,8 @@ module.exports = class Log {
          s += ` ${c.gray}aura faded`
          if (customFuncResult && customFuncResult.stunDuration)
             s += ` ${c.cyanDark}stunned ${customFuncResult.stunDuration/1000} sec`;
+         if (customFuncResult && customFuncResult.frenzyDuration)
+            s += ` ${c.cyanDark}frenzy for ${customFuncResult.frenzyDuration/1000} sec`;
       } else {
          // SPELL_CAST_SUCCESS 
          // SWING_DAMAGE
@@ -247,6 +274,8 @@ module.exports = class Log {
          let amountColor = c.red;
          if (event.source && event.source.name)
             s += ` ${this.getPrettyEntityName(event.source)}`;
+         if (event.event === 'SPELL_DISPEL')
+            s += ` ${c.gray}dispelled`
          if (event.eventSuffix != 'INTERRUPT' && event.extraSpellName)
             s += ` ${c.orange}${event.extraSpellName}`;
          if (event.eventSuffix == 'AURA_BROKEN_SPELL')
@@ -256,6 +285,8 @@ module.exports = class Log {
             if (event.target)
                this.summonedObjects[event.target.guid] = event.source;
          }
+         if (event.event === 'PARTY_KILL')
+            s += ` ${c.gray}killing blow`
          if (event.absorbedSpell) {
             s += ` ${c.orange}${event.absorbedSpell.name}`;
          } else {
@@ -264,8 +295,13 @@ module.exports = class Log {
             else if (isSpellEnergize) {
                s += ` ${c.gray}gains ${c.greenDark}${event.amount} ${c.gray}energy from`;
             }
-            if (event.spell)
+            if (event.spell) {
+               if (event.event === 'SPELL_DISPEL')
+                  s += ` ${c.gray}using`
                s += ` ${c.orange}${event.spell.name}`;
+               if (event.event === 'SPELL_DISPEL')
+                  s += ` ${c.gray}on`
+            }
             if (event.spellName)
                s += ` ${c.orange}${event.spellName}`;
          }
@@ -309,6 +345,8 @@ module.exports = class Log {
                s += ` ${c.gray}(${event.blocked} blocked)`;
             if (event.absorbed > 0)
                s += ` ${c.gray}(${event.absorbed} absorbed)`;
+            if (event.overheal > 0)
+               s += ` ${c.gray}(${event.overheal} overheal)`;
          }
          if (event.eventSuffix == 'CAST_FAILED') {
             s += ` ${c.gray}failed`;
@@ -333,13 +371,14 @@ module.exports = class Log {
             for (let guid in outputPerSource) {
                const output = outputPerSource[guid];
                if (output >= 0)
-                  arr.push([guid, outputPerSource[guid]]);
+                  arr.push([guid, '--', outputPerSource[guid]]);
                else 
-                  arr.push([output.name, output.amount]);
+                  arr.push([output.name, output.hits, output.amount]);
             }
             arr = arr.sort((a, b) => b[1]-a[1]);
+            console.log(`  ${'damage'.toLocaleString('en').padStart(12)} ${'hits'.padStart(2)}  source`);
             for (let pair of arr)
-               console.log(`  ${pair[1].toLocaleString('en').padStart(12)}  ${pair[0]}`);
+               console.log(`  ${pair[2].toLocaleString('en').padStart(12)}  ${(''+pair[1]).padStart(2)}  ${pair[0]}`);
          }
       }
    }

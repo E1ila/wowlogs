@@ -15,6 +15,7 @@ const MindControlSpells = [
    24178, // ZG Will of Hakkar
    14515, // BWL Dominate Mind
    22667, // BWL Shadow Command
+   28410, // Chains of Kel'Thuzad
 ];
 const CCEffectSpells = [
    4068,  // Iron Grenade
