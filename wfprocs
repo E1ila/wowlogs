@@ -1,0 +1,1 @@
+node wowlog $1 --filter SPELL_EXTRA_ATTACKS --spell "Windfury Totem" --sum count

@@ -1,0 +1,3 @@
+grep -E "Frostbolt|Frost Shock|Shoot|Frost Nova|Chilled" $1 | grep -E "SPELL_CAST_SUCCESS|SPELL_MISSED" -c
+
+

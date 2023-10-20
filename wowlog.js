@@ -31,6 +31,7 @@ program
    .option('--force', 'Force treating file as log version 9')
    .option('--sum <field>', 'Aggregate one of: ' + Object.values(consts.fields).join(', '), collect, [])
    .option('--ext <extension>', 'Process only files with this extension')
+   .option('--prefix <prefix>', 'Scan only files starting with this prefix')
    .option('--params <param>', 'Extra parameters passed to custom function', collect, [])
    .option('--source <name>', 'Show only events made by this player')
    .option('--target <name>', 'Show only events made by this player')
@@ -60,12 +61,16 @@ program
          options['ignoreVerErr'] = true;
 
       const func = options['func'] && require('./funcs/' + options['func']);
+      if (func && func.init)
+         await func.init();
       if (fs.existsSync(logPath)) {
          if (fs.lstatSync(logPath).isDirectory()) {
             options['dirscan'] = true;
             const files = fs.readdirSync(logPath);
             for (let file of files) {
                if (options['ext'] && !file.endsWith('.' + options['ext']))
+                  continue;
+               if (options['prefix'] && !file.startsWith(options['prefix']))
                   continue;
                await processFile(path.join(logPath, file), options, report, func);
             }

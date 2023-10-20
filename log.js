@@ -159,11 +159,13 @@ module.exports = class Log {
    }
 
    sumField(field, source, amount) {
-      if (!this.result.sum[field][source.guid])
+      if (!source)
+         return;
+      if (!this.result.sum[field][source.guid]) 
          this.result.sum[field][source.guid] = {name: source.name, amount: 0, hits: 0};
-         this.result.sum[field][source.guid].amount += amount;
-         this.result.sum[field][source.guid].hits++;
-         this.result.sum[field].Total += amount;
+      this.result.sum[field][source.guid].amount += amount;
+      this.result.sum[field][source.guid].hits++;
+      this.result.sum[field].Total += amount;
    }
 
    initResult() {

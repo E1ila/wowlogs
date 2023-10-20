@@ -16,8 +16,8 @@ module.exports = {
     */
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
       let result = {printPretty: false};
-      if (event.event === "SPELL_EXTRA_ATTACKS") {
-         result.printPretty = true;
+      if (event.event === "SPELL_EXTRA_ATTACKS" && event.spell && event.spell.name === "Windfury Totem") {
+         // result.printPretty = true;
          playerProcs[event.source.name] = (playerProcs[event.source.name] || 0) + 1;
       }
       return result;
