@@ -5,6 +5,7 @@ const c = require("../colors");
 
 const frozen = {};
 const FrostBlastSpellId = 27808;
+let started = 0;
 
 module.exports = {
    /**
@@ -17,6 +18,16 @@ module.exports = {
     */
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
       let result = {printPretty: false};
+
+      if (currentEncounter && currentEncounter.encounterId === 1114) {
+         if (!started && ['SPELL_CAST_SUCCESS', 'SPELL_AURA_APPLIED', 'SPELL_CAST_START', 'SWING_DAMAGE_LANDED'].indexOf(event.event) != -1 && (event.source && event.source.name === currentEncounter.encounterName || event.target && event.target.name === currentEncounter.encounterName)) {
+            started = +event.date;
+            result.printPretty = true;
+         }
+         if (event.event === 'ENCOUNTER_END')
+            started = 0;
+      }
+
       if (event.spell && event.spell.id === FrostBlastSpellId) {
          result.printPretty = true;
       }
