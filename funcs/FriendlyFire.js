@@ -28,8 +28,18 @@ const CCEffectSpells = [
    19503,  // Scatter shot
    19254,  // Touch of Weakness (not cc, but not his fault)
 ];
+const PolymorphSpells = [
+   118,
+   28272,
+   12826,
+   12825,
+   12824,
+   28271,
+   28270
+];
 const underMindControl = {};
 const totalFriendlyFireDamage = {};
+let lastFF = 0;
 
 module.exports = {
    /**
@@ -58,6 +68,7 @@ module.exports = {
          const spellToIgnore = event.spell && SpellsToIgnore.indexOf(event.spell.id) !== -1;
          if (!reflect && !spellToIgnore) {
                result.printPretty = true;
+               lastFF = +event.date;
                if (!totalFriendlyFireDamage[event.source.name])
                   totalFriendlyFireDamage[event.source.name] = {amount: 0, hits: 0, abilities: {}, targets: {}};
                   totalFriendlyFireDamage[event.source.name].amount += event.amount;
@@ -69,6 +80,13 @@ module.exports = {
                      totalFriendlyFireDamage[event.source.name].abilities[event.spell.name] += 1;
                }
       }
+      
+      if (event.spell && PolymorphSpells.indexOf(event.spell.id) != -1) 
+         result.printPretty = true;
+
+      if (event.event === 'UNIT_DIED' && +event.date - lastFF < 100)
+         result.printPretty = true;
+
       return result;
    },
 

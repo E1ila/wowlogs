@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 const
@@ -21,6 +22,12 @@ async function processFile(filename, options, report, func) {
    });
 }
 
+async function processStdin(options, report, func) {
+   report.files++;
+   const log = new Log(undefined, options, report, func);
+   return log.process();
+}
+
 program
    .command('<log-path>', 'Path to log file or raw log line to parse')
    .option('-v, --verbose', 'Print detailed debug information')
@@ -38,6 +45,7 @@ program
    .option('--spell <name>', 'Show only this spell')
    .option('--miss <name>', 'Show only this miss type')
    .option('--dmgheal', 'Show only entries with damage/healing')
+   .option('--minamount <x>', 'Filter amount greater than')
    .option('--stand', 'Use AND condition between source and target')
    .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
    .option('--encounters', 'Print detected encounters')
@@ -63,7 +71,9 @@ program
       const func = options['func'] && require('./funcs/' + options['func']);
       if (func && func.init)
          await func.init();
-      if (fs.existsSync(logPath)) {
+      if (logPath === '-')
+         await processStdin(options, report, func);
+      else if (fs.existsSync(logPath)) {
          if (fs.lstatSync(logPath).isDirectory()) {
             options['dirscan'] = true;
             const files = fs.readdirSync(logPath);

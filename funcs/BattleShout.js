@@ -47,6 +47,9 @@ module.exports = {
          players[name].uptime = players[name].uptime + uptime;
          players[name].start = 0;
       }
+      if (event.spell && event.spell.name === 'Heroic Strike' && !warriors[event.source.name]) {
+         warriors[event.source.name] = {};
+      }
       if (event.spell && BattleShoutSpellId[event.spell.id]) {
          if (event.event === "SPELL_CAST_SUCCESS") {
             const rank = BattleShoutSpellId[event.spell.id];
@@ -77,13 +80,22 @@ module.exports = {
 
    finishReport: function (report, options) {
       let table = new Table({
-         head: ['Player', options['encounter'] ? 'Uptime (sec)' : 'Uptime (min)'],
+         head: ['Player', options['encounter'] ? 'Uptime (sec)' : 'Uptime (min)', 'BS Casts'],
       });
 
       let rows = [];
       for (let playerName in players) {
          let uptime = options['encounter'] ? Math.round(players[playerName].uptime / 1000) : Math.round(players[playerName].uptime / 1000 / 6) / 10;
-         rows.push([playerName + (warriors[playerName] ? ' *' : ''), uptime]);
+
+         let casts = '';
+         let warr = warriors[playerName];
+         if (warr) {
+            casts = 0;
+            for (let rank in warr)
+               casts += warr[rank];
+         }
+
+         rows.push([playerName + (warriors[playerName] ? ' *' : ''), uptime, casts]);
       }
       rows = rows.sort((a, b) => b[1] - a[1]);
       rows.forEach(row => table.push(row));

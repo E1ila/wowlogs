@@ -12,6 +12,7 @@ const Totems = {
    8161: "Strength R3",
    8160: "Strength R2",
    8075: "Strength R1",
+   8143: "Tremor Totem",
    25359: "Grace of Air R3",
    10627: "Grace of Air R2",
    8835: "Grace of Air R1",
@@ -89,7 +90,7 @@ module.exports = {
          row.push(total);
          rows.push(row);
       }
-      rows = rows.sort((a, b) => b[1] - a[1]);
+      rows = rows.sort((a, b) => b[b.length-1] - a[b.length-1]);
       rows.forEach(row => table.push(row));
       console.log(table.toString());
    },
