@@ -13,8 +13,9 @@ function collect(value, previous) {
    return previous.concat([value]);
 }
 
-async function processFile(filename, options, report, func) {
-   console.log(`====| Processing file ${filename}`);
+async function processFile(filename, options, report, func, fileIndex) {
+   if (fileIndex != undefined)
+      console.log(`====| Processing file ${filename}`);
    report.files++;
    const log = new Log(filename, options, report, func);
    await log.process().catch(e => {
@@ -33,6 +34,7 @@ program
    .option('-v, --verbose', 'Print detailed debug information')
    .option('--printobj', 'Print parsed events')
    .option('--print', 'Print pretty parsed events')
+   .option('--printraw', 'Print pretty parsed events')
    .option('--func <functionName>', 'Print parsed events')
    .option('--filter <CSV>', 'Process only these events, CSV', v => v.split(","), undefined)
    .option('--force', 'Force treating file as log version 9')
@@ -50,6 +52,7 @@ program
    .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
    .option('--encounters', 'Print detected encounters')
    .option('--timediff', 'Measure time difference between events')
+   .option('--lines <range>', 'Scan only lines in this range, format "300-400"')
    .action(async (logPath, options) => {
       const report = {
          files: 0,
@@ -67,7 +70,7 @@ program
 
       if (options['force'])
          options['ignoreVerErr'] = true;
-
+ 
       const func = options['func'] && require('./funcs/' + options['func']);
       if (func && func.init)
          await func.init();
@@ -77,12 +80,13 @@ program
          if (fs.lstatSync(logPath).isDirectory()) {
             options['dirscan'] = true;
             const files = fs.readdirSync(logPath);
+            let fileIndex = 0;
             for (let file of files) {
                if (options['ext'] && !file.endsWith('.' + options['ext']))
                   continue;
                if (options['prefix'] && !file.startsWith(options['prefix']))
                   continue;
-               await processFile(path.join(logPath, file), options, report, func);
+               await processFile(path.join(logPath, file), options, report, func, fileIndex++);
             }
          } else
             await processFile(logPath, options, report, func);
@@ -99,8 +103,10 @@ program
       const took = moment().diff(moment(report.startTime), 'seconds');
       const encounters = Object.keys(report.encounters).map(key => [key, report.encounters[key]]).sort((a, b) => b[1] - a[1]);
 
-      console.log(`\n===================================================`);
-      console.log(` Finished processing ${report.files} files, took ${took} seconds`);
+      if (options['dirscan']) {
+         console.log(`\n===================================================`);
+         console.log(` Finished processing ${report.files} files, took ${took} seconds`);
+      }
 
       if (options['encounters']) {
          console.log(` Encounters:`);

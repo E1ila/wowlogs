@@ -19,6 +19,16 @@ module.exports = class Log {
       this.report = report;
       this.currentEncounter = null;
       this.summonedObjects = {};
+
+      if (options['lines']) {
+         const parts = options['lines'].split('-');
+         this.lineStart = +parts[0];
+         if (parts.length == 1)
+            this.lineEnd = this.lineStart;
+         else
+            this.lineEnd = +parts[1];
+      }
+
       this.initResult();
    }
 
@@ -65,7 +75,7 @@ module.exports = class Log {
                }
                if (event) {
                   try {
-                     this.processEvent(lineNumber, event, lastEvent);
+                     this.processEvent(lineNumber, event, lastEvent, line);
                   } catch (e) {
                      console.error(`#${lineNumber} EVENT ` + JSON.stringify(event));
                      console.error(`Failed processing event #${lineNumber}: ${e.stack}`);
@@ -82,7 +92,7 @@ module.exports = class Log {
       });
    }
 
-   processEvent(lineNumber, event, lastEvent) {
+   processEvent(lineNumber, event, lastEvent, rawLine) {
       let encounterStartOrStop = false;
       let endedEncounter = null;
       if (event.event === 'ENCOUNTER_START') {
@@ -99,6 +109,9 @@ module.exports = class Log {
          return;
 
       if (this.options['encounterAttempt'] && this.currentEncounter && this.report.encounters[this.currentEncounter.encounterName] != this.options['encounterAttempt'])
+         return;
+
+      if (this.lineStart != undefined && lineNumber < this.lineStart || this.lineEnd != undefined && lineNumber > this.lineEnd)
          return;
 
       if (!encounterStartOrStop) {
@@ -141,6 +154,9 @@ module.exports = class Log {
 
       if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
+
+      if (this.options['printraw'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
+         console.log(rawLine);
 
       const sumFields = this.options['sum'];
       if (sumFields) {
@@ -264,6 +280,8 @@ module.exports = class Log {
          if (event.spellName)
             s += ` ${c.orange}${event.spellName}`;
          s += ` ${c.gray}aura faded`
+         if (event.target && event.target.name)
+            s += ` ${c.gray}from ${this.getPrettyEntityName(event.target)}`;
          if (customFuncResult && customFuncResult.stunDuration)
             s += ` ${c.cyanDark}stunned ${customFuncResult.stunDuration / 1000} sec`;
          if (customFuncResult && customFuncResult.frenzyDuration)
