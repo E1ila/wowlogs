@@ -19,14 +19,21 @@ module.exports = class Log {
       this.report = report;
       this.currentEncounter = null;
       this.summonedObjects = {};
+      this.guidMap = {};   // mob guid -> id
+      this.guidCount = {}; // mob name -> id count
 
       if (options['lines']) {
-         const parts = options['lines'].split('-');
+         let separator = '-';
+         if (options['lines'].indexOf('+') != -1) {
+            separator = '+';
+            this.lineEndSeconds = true;
+         }
+         const parts = options['lines'].split(separator);
          this.lineStart = +parts[0];
          if (parts.length == 1)
-            this.lineEnd = this.lineStart;
+               this.lineEnd = this.lineStart;
          else
-            this.lineEnd = +parts[1];
+            this.lineEnd = parts[1] == '' ? undefined : +parts[1];
       }
 
       this.initResult();
@@ -75,7 +82,9 @@ module.exports = class Log {
                }
                if (event) {
                   try {
-                     this.processEvent(lineNumber, event, lastEvent, line);
+                     const finishNow = this.processEvent(lineNumber, event, lastEvent, line);
+                     if (finishNow)
+                        readInterface.close();
                   } catch (e) {
                      console.error(`#${lineNumber} EVENT ` + JSON.stringify(event));
                      console.error(`Failed processing event #${lineNumber}: ${e.stack}`);
@@ -108,15 +117,22 @@ module.exports = class Log {
       if (this.options['encounter'] && (!(this.currentEncounter || endedEncounter) || (this.currentEncounter || endedEncounter).encounterName.toLowerCase() != this.options['encounter'].toLowerCase()))
          return;
 
-      if (this.options['encounterAttempt'] && this.currentEncounter && this.report.encounters[this.currentEncounter.encounterName] != this.options['encounterAttempt'])
+      if (this.options['encounterAttempt'] && (this.currentEncounter || endedEncounter) && this.report.encounters[(this.currentEncounter || endedEncounter).encounterName] != this.options['encounterAttempt'])
          return;
 
-      if (this.lineStart != undefined && lineNumber < this.lineStart || this.lineEnd != undefined && lineNumber > this.lineEnd)
+      if (this.lineStart == lineNumber) 
+         this.lineStartTime = +event.date;
+      if (this.lineStart != undefined && lineNumber < this.lineStart || this.lineEnd != undefined && (this.lineEndSeconds ? +event.date > this.lineStartTime+this.lineEnd*1000 : lineNumber > this.lineEnd))
          return;
 
       if (!encounterStartOrStop) {
          // use filters for rows other than encounter start/stop
-         if (this.options['spell'] && !((event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase())))
+         if ( this.options['spell'] && 
+              !( (event.spell && event.spell.id === +this.options['spell']) ||
+                 (event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || 
+                 (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase()) 
+               )
+            )
             return;
 
          if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
@@ -135,7 +151,7 @@ module.exports = class Log {
          let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
          let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target']));
          let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
-         if (!unitDied || !this.options['encounter']) {
+         if (event.event != 'COMBATANT_INFO' && (!unitDied || !this.options['encounter'])) {
             if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
                if (!sourceMatch || !targetMatch) // AND condition between sournce and target
                   return;
@@ -155,8 +171,12 @@ module.exports = class Log {
       if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
 
-      if (this.options['printraw'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
+      if (this.options['printraw'])
          console.log(rawLine);
+
+      if (this.result.startTime === undefined) 
+         this.result.startTime = +event.date;
+      this.result.endTime = +event.date;
 
       const sumFields = this.options['sum'];
       if (sumFields) {
@@ -180,6 +200,9 @@ module.exports = class Log {
             }
          }
       }
+
+      if (customFuncResult && customFuncResult.finishNow)
+         return true;
    }
 
    sumField(field, source, amount) {
@@ -208,18 +231,28 @@ module.exports = class Log {
          obj[name] = defaultValue;
    }
 
-   getPrettyEntityName(entity) {
+   getPrettyEntityName(entity, printGuid) {
       let summonedBy = this.summonedObjects[entity.guid];
       if (summonedBy)
          return this.getPrettyEntityName(summonedBy)
-      const color = entity.guid.indexOf("Player-") ? c.blue : c.blueRed;
-      return color + entity.name.split('-')[0];
+      const guidParts = entity.guid.split('-');
+      const color = guidParts.length == 3 ? c.blue : c.blueRed;
+      let guidText = '';
+      if (printGuid && guidParts.length == 7) {
+         let id = this.guidMap[entity.guid];
+         if (id == undefined) {
+            this.guidCount[entity.name] = (this.guidCount[entity.name] || 0) + 1;
+            id = this.guidCount[entity.name];
+            this.guidMap[entity.guid] = id;
+         }
+         guidText = ` (${id})`;
+      }
+      return color + entity.name.split('-')[0] + c.off + guidText;
    }
 
    printPretty(lineNumber, event, customFuncResult, printTimeDiff) {
       switch (event.event) {
          case 'SPELL_AURA_REMOVED_DOSE':
-         case 'SWING_DAMAGE':
          // case 'SPELL_EXTRA_ATTACKS':
          case 'SPELL_AURA_APPLIED_DOSE':
          case 'SPELL_AURA_REFRESH':
@@ -228,6 +261,9 @@ module.exports = class Log {
          case 'SPELL_PERIODIC_ENERGIZE':
             return;
       }
+
+      if (event.event === 'SWING_DAMAGE' && !this.options['swing'])
+         return;
 
       const isSpellEnergize = event.event == 'SPELL_ENERGIZE';
       let s = `${c.grayDark}${('' + lineNumber).padStart(10)}   ${event.dateStr} `;
@@ -239,49 +275,51 @@ module.exports = class Log {
       s += `  ${c.grayDark}${event.event}`.padEnd(40);
 
       if (event.event === 'ENCOUNTER_START') {
-         // s += `🟩 ------- Encounter Start: ${c.gray}${event.encounterName}${c.grayDark} -------`;
-         // console.log(s + c.off);
+         if (this.options['encounter'])
+            console.log(s + `🟩 ------- Encounter Start: ${c.gray}${event.encounterName}${c.grayDark} #${this.report.encounters[event.encounterName]} -------` + c.off);
          return;
       } else if (event.event === 'ENCOUNTER_END') {
-         // s += `🟥 ------- Encounter End: ${c.gray}${event.encounterName}${c.grayDark} -------`;
-         // console.log(s + c.off);
+         if (this.options['encounter']) 
+            console.log(s + `🟥 ------- Encounter End: ${c.gray}${event.encounterName}${c.grayDark} #${this.report.encounters[event.encounterName]} -------` + c.off);
          return;
+      }
+      let printGuid = this.options['guid'];
+
+      const addSpellName = () => {
+         if (event.spell) {
+            s += ` ${c.orange}${event.spell.name}`;
+            if (this.options['spellid'])
+               s += ` ${c.gray}(${event.spell.id})`;
+         }
+         if (event.spellName)
+            s += ` ${c.orange}${event.spellName}`;
       }
 
       if (event.event === 'SPELL_EXTRA_ATTACKS') {
          if (event.source && event.source.name)
-            s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}gained ${c.grayDark}extra attack from ${c.gray}${event.spell.name}`;
+            s += ` ${this.getPrettyEntityName(event.source, printGuid)} ${c.gray}gained ${c.grayDark}extra attack from ${c.gray}${event.spell.name}`;
       } else if (event.event === 'SPELL_AURA_BROKEN') {
          // SPELL_AURA_BROKEN
          if (event.source && event.source.name)
-            s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}broken`;
-         if (event.spell)
-            s += ` ${c.orange}${event.spell.name}`;
-         if (event.spellName)
-            s += ` ${c.orange}${event.spellName}`;
+            s += ` ${this.getPrettyEntityName(event.source, printGuid)} ${c.gray}broken`;
+         addSpellName()
          if (event.target && event.target.name)
-            s += ` ${c.gray}of ${this.getPrettyEntityName(event.target)}`;
+            s += ` ${c.gray}of ${this.getPrettyEntityName(event.target, printGuid)}`;
       } else if (event.event === 'SPELL_AURA_APPLIED') {
          // SPELL_AURA_APPLIED
          if (event.source && event.source.name)
-            s += ` ${this.getPrettyEntityName(event.source)} ${c.gray}caused`;
-         if (event.spell)
-            s += ` ${c.orange}${event.spell.name}`;
-         if (event.spellName)
-            s += ` ${c.orange}${event.spellName}`;
+            s += ` ${this.getPrettyEntityName(event.source, printGuid)} ${c.gray}caused`;
+         addSpellName()
          if (event.target && event.target.name)
-            s += ` ${c.gray}on ${this.getPrettyEntityName(event.target)}`;
+            s += ` ${c.gray}on ${this.getPrettyEntityName(event.target, printGuid)}`;
       } else if (event.event === 'SPELL_AURA_REMOVED') {
          // SPELL_AURA_REMOVED
          if (event.source && event.source.name)
-            s += ` ${this.getPrettyEntityName(event.source)}`;
-         if (event.spell)
-            s += ` ${c.orange}${event.spell.name}`;
-         if (event.spellName)
-            s += ` ${c.orange}${event.spellName}`;
+            s += ` ${this.getPrettyEntityName(event.source, printGuid)}`;
+         addSpellName()
          s += ` ${c.gray}aura faded`
          if (event.target && event.target.name)
-            s += ` ${c.gray}from ${this.getPrettyEntityName(event.target)}`;
+            s += ` ${c.gray}from ${this.getPrettyEntityName(event.target, printGuid)}`;
          if (customFuncResult && customFuncResult.stunDuration)
             s += ` ${c.cyanDark}stunned ${customFuncResult.stunDuration / 1000} sec`;
          if (customFuncResult && customFuncResult.frenzyDuration)
@@ -301,7 +339,7 @@ module.exports = class Log {
             s += ` ${c.purple}${event.encounterName}`;
          let amountColor = c.red;
          if (event.source && event.source.name)
-            s += ` ${this.getPrettyEntityName(event.source)}`;
+            s += ` ${this.getPrettyEntityName(event.source, printGuid)}`;
          if (event.event === 'SPELL_DISPEL')
             s += ` ${c.gray}dispelled`
          if (event.eventSuffix != 'INTERRUPT' && event.extraSpellName)
@@ -347,7 +385,7 @@ module.exports = class Log {
          }
          if (event.target && event.target.name) {
             if (!isSpellEnergize || event.target.name != event.source.name)
-               s += ` ${this.getPrettyEntityName(event.target)}`;
+               s += ` ${this.getPrettyEntityName(event.target, printGuid)}`;
             if (event.event == 'UNIT_DIED')
                s += ` ${c.red}died ☠️`;
          }
@@ -388,6 +426,8 @@ module.exports = class Log {
          if (event.missType)
             s += ` ${c.red}${event.missType}`;
       }
+      if (customFuncResult && customFuncResult.extraText)
+         s += ` ${c.cyanDark}${customFuncResult.extraText}`;
       console.log(s + c.off);
    }
 
@@ -398,6 +438,7 @@ module.exports = class Log {
       if (this.result.sum) {
          for (let field in this.result.sum) {
             console.log(`${field.toUpperCase()}:`)
+            let seconds = (this.result.endTime - this.result.startTime) / 1000;
             const outputPerSource = this.result.sum[field];
             let arr = [];
             for (let guid in outputPerSource) {
@@ -408,9 +449,9 @@ module.exports = class Log {
                   arr.push([output.name, output.hits, output.amount]);
             }
             arr = arr.sort((a, b) => b[1] - a[1]);
-            console.log(`  ${'damage'.toLocaleString('en').padStart(12)} ${'hits'.padStart(2)}  source`);
+            console.log(`  ${'amount'.toLocaleString('en').padStart(12)}  ${'count'.padStart(6)}  ${this.options['dmgheal'] ? 'dps  '.padStart(10) : ''}source`);
             for (let pair of arr)
-               console.log(`  ${pair[2].toLocaleString('en').padStart(12)}  ${('' + pair[1]).padStart(2)}  ${pair[0]}`);
+               console.log(`  ${pair[2].toLocaleString('en').padStart(12)}  ${('' + pair[1]).padStart(6)}  ${this.options['dmgheal'] ? (''+Math.round(pair[2]/seconds)).padStart(8)+'  ' : ''}${pair[0]}`);
          }
       }
    }

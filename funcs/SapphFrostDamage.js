@@ -33,6 +33,8 @@ let decurses = {};
 
 const FrostAuraDmgSpellId = 348191;
 const FrostBreathSpellId = 28524;
+const GreaterFrostProtSpellId = 17544;
+const FrostProtSpellId = 7239;
 
 module.exports = {
    init: async function() {
@@ -93,7 +95,7 @@ module.exports = {
             let item = dbItems.get("entry", gear.itemId);
             fr += +item[frostResColumn];
          }
-         players[event.playerGuid] = {fr, absorbed: 0, resisted: 0, damage: 0, ticks: 0, died: null};
+         players[event.playerGuid] = {fr, absorbed: 0, resisted: 0, damage: 0, ticks: 0, died: null, fpp: 0, gfpp: 0, guid: event.playerGuid};
       }
       else if (event.event === 'SPELL_DISPEL' && event.source && event.target) { //  && eligable[event.source.name]
          // result.printPretty = true;
@@ -102,12 +104,22 @@ module.exports = {
          decurses[event.source.name][event.extraSpellName] = (decurses[event.source.name][event.extraSpellName] || 0) + 1;
          // result.printPretty = true;
       } 
+      else if (event.event === 'SPELL_AURA_APPLIED' && [FrostProtSpellId, GreaterFrostProtSpellId].indexOf(event.spell.id) != -1) {
+         result.printPretty = true;
+         const player = players[event.target.guid];
+         if (event.spell.id == GreaterFrostProtSpellId)
+            player.gfpp += 1;
+         else 
+            player.fpp += 1;
+      } 
       else if (  spellEvent != -1 && 
          event.spell && FrostAuraDmgSpellId === event.spell.id && 
          event.source.name === currentEncounter.encounterName &&
          event.target && event.target.guid.indexOf('Player-') === 0) {
             
             const player = players[event.target.guid];
+            if (!player)
+               throw new Error(`Can't find player with event.target.guid ${event.target.guid}`);
             player.name = event.target.name;
             player.ticks += 1;
             playerByName[player.name] = player;
@@ -123,8 +135,9 @@ module.exports = {
                player.resisted += 600; // Frost Aura full damage
             }
          } 
-         else if (event.event === 'SPELL_CAST_START' && event.spell && event.spell.id === FrostBreathSpellId) {
+         else if (event.event === 'SPELL_CAST_SUCCESS' && event.spell && event.spell.id === FrostBreathSpellId) {
             airPhases++;
+            result.printPretty = true;
          }
          
          return result;
@@ -135,8 +148,8 @@ module.exports = {
       },
       
       finishReport: function (report, options) {
-         console.log(`\n${c.whiteBright}${'Player'.padEnd(25)} ${'FrR'.padStart(5)} ${'Dmg taken'.padStart(10)} ${'Absorbed'.padStart(10)} ${'Resisted'.padStart(10)}  ${'Activity'.padEnd(10)}${c.off}`);
-         console.log(''.padEnd(76, '-'));
+         console.log(`\n${c.whiteBright}${'Player'.padEnd(25)} ${'FrR'.padStart(5)} ${'Dmg taken'.padStart(10)} ${'Absorbed'.padStart(10)} ${'Resisted'.padStart(10)} ${'GFPP'.padStart(5)} ${'FPP'.padStart(5)}  ${'Activity'.padEnd(10)}${c.off}`);
+         console.log(''.padEnd(100, '-'));
          
          const fightLength = moment(fightEnd).diff(moment(fightStart), 'seconds');
          
@@ -145,7 +158,17 @@ module.exports = {
          let overallDamage = 0;
          let rows = [];
          for (let player of Object.values(players)) {
-            rows.push([player.name, ''+player.fr, player.damage.toLocaleString(), player.absorbed.toLocaleString(), player.resisted.toLocaleString(), player.died ? c.red + Math.round(moment(player.died).diff(moment(fightStart), 'seconds') / fightLength * 100)+c.redDark+'%'+c.off : '100%', player]);
+            player.activity = moment(player.died).diff(moment(fightStart), 'seconds') / fightLength;
+            rows.push([
+               player.name || player.guid, ''+player.fr, 
+               player.damage.toLocaleString(), 
+               player.absorbed.toLocaleString(), 
+               player.resisted.toLocaleString(), 
+               player.gfpp.toLocaleString(),
+               player.fpp.toLocaleString(),
+               player.died ? c.red + Math.round(player.activity * 100)+c.redDark+'%'+c.off : '100%', 
+               player
+            ]);
             overallDamage += player.damage;
             const playerInfo = dbPlayer.get('name', player.name);
             if (playerInfo) {
@@ -158,18 +181,19 @@ module.exports = {
                }
             }
          }
-         rows = rows.sort((a, b) => b[6].damage - a[6].damage);
+         const playerSortScore = (player) => (player.resisted + player.absorbed);
+         rows = rows.sort((a, b) => playerSortScore(b[8]) - playerSortScore(a[8]));
          rows.forEach(row => {
             if (row.length) {
                const playerInfo = dbPlayer.get('name', row[0]);
-               console.log(`${playerInfo ? classColor[playerInfo[2]] : c.off}${row[0].padEnd(25)}${c.off} ${row[6].fr>200 ? c.greenBright : (row[6].fr>150 ? c.green : (row[6].fr>100 ? c.orange : (row[6].fr<50 ? c.red : c.orangeDark)))}${row[1].padStart(5)}${c.off} ${row[2].padStart(10)}${c.off} ${row[6].absorbed>7000 ? c.greenBright : (row[6].absorbed>4500 ? c.green : (row[6].absorbed<2000 ? c.redDark : c.off))}${row[3].padStart(10)}${c.off} ${row[4].padStart(10)}  ${row[5].padEnd(10)}${c.off}`);
+               console.log(`${playerInfo ? classColor[playerInfo[2]] : c.off}${(row[0] || '??').padEnd(25)}${c.off} ${row[8].fr>200 ? c.greenBright : (row[8].fr>150 ? c.green : (row[8].fr>100 ? c.orange : (row[8].fr<50 ? c.red : c.orangeDark)))}${row[1].padStart(5)}${c.off} ${row[2].padStart(10)}${c.off} ${row[8].absorbed>7000 ? c.greenBright : (row[8].absorbed>4500 ? c.green : (row[8].absorbed<2000 ? c.redDark : c.off))}${row[3].padStart(10)}${c.off} ${row[4].padStart(10)} ${row[5].padStart(5)} ${row[6].padStart(5)}  ${row[7].padEnd(10)}${c.off}`);
                // ${row[6].damage>40000 ? c.redDark : (row[6].damage>20000 ? c.orangeDark : (row[6].damage>10000 ? c.greenDark : c.green))}
             }
          });
          console.log(`\nOverall damage taken: ${overallDamage.toLocaleString()}\nAverage DPS FrR: ${Math.round(frMelee.sum / frMelee.count)}\nAverage Healer FrR: ${Math.round(frHealers.sum / frHealers.count)}\nAir phases: ${airPhases}\nFight length: ${fightLength.toLocaleString()} seconds\nDeaths: ${playerDeaths}\nResult: ${wipe ? 'wipe' : 'kill'}\n`);
          
          console.log(`\nDecurses:`);
-         const head = ['Player', 'Activity'];
+         let head = ['Player', 'Activity'];
          const existingHeaders = head.length;
          rows = [];
          for (let name in decurses) {
@@ -199,6 +223,20 @@ module.exports = {
          var table = new Table({head});
          rows.forEach(row => table.push(row));
          console.log(table.toString());
+
+         rows = [];
+         for (let player of Object.values(players)) {
+            const playerInfo = dbPlayer.get('name', player.name);
+            if (!playerInfo || ['Shaman', 'Priest', 'Druid'].indexOf(playerInfo[2]) == -1) {
+               rows.push([(playerInfo ? classColor[playerInfo[2]] : c.off) + (player.name || player.guid).padEnd(30) + c.off, player.gfpp, player.fpp]);
+            }
+         }
+         rows = rows.sort((a, b) => b[1]+b[2]-a[1]-a[2]);
+         console.log(`\nDPS Frost Protection Potions:\n`);
+         console.log(`${'Player'.padEnd(30)} ${'GFPP'.padEnd(6)} ${'FPP'.padEnd(6)} \n------------------------------------------------------------`);
+         rows.forEach(row => {
+            console.log(`${row[0]} ${row[1].toLocaleString().padEnd(6)} ${row[2].toLocaleString().padEnd(6)} `);
+         });
       },
    }
    
