@@ -15,6 +15,7 @@ const MindControlSpells = [
    24178, // ZG Will of Hakkar
    14515, // BWL Dominate Mind
    22667, // BWL Shadow Command
+   28410, // Chains of Kel'Thuzad
 ];
 const CCEffectSpells = [
    4068,  // Iron Grenade
@@ -82,7 +83,7 @@ module.exports = {
       if (event.event == 'UNIT_DIED' && Object.values(underMindControl).length) 
          result.printPretty = true;
 
-      if (currentEncounter.encounterId == 709) {
+      if (currentEncounter && currentEncounter.encounterId == 709) {
          // The Prophet Skeram
          if (event.event == 'SPELL_CAST_SUCCESS' && event.spell && event.spell.id == 26192) 
             result.printPretty = true;      

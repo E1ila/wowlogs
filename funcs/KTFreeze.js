@@ -5,6 +5,8 @@ const c = require("../colors");
 
 const frozen = {};
 const FrostBlastSpellId = 27808;
+const NatureSwiftness = [16188, 17116];
+const SpellsToPrint = NatureSwiftness.concat([FrostBlastSpellId]);
 let started = 0;
 
 module.exports = {
@@ -28,7 +30,7 @@ module.exports = {
             started = 0;
       }
 
-      if (event.spell && event.spell.id === FrostBlastSpellId) {
+      if (event.spell && SpellsToPrint.indexOf(event.spell.id) != -1) {
          result.printPretty = true;
       }
       if (event.event === "SPELL_AURA_APPLIED" && event.spell && event.spell.id === FrostBlastSpellId && event.target.guid.indexOf('Player-') === 0) {

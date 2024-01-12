@@ -130,7 +130,9 @@ module.exports = class Log {
          if ( this.options['spell'] && 
               !( (event.spell && event.spell.id === +this.options['spell']) ||
                  (event.spell && event.spell.name.toLowerCase() === this.options['spell'].toLowerCase()) || 
-                 (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase()) 
+                 (event.spellName && event.spellName.toLowerCase() === this.options['spell'].toLowerCase()) ||
+                 (event.extraSpellName && event.extraSpellName.toLowerCase() === this.options['spell'].toLowerCase()) ||
+                 (event.extraSpellId === +this.options['spell'])
                )
             )
             return;
@@ -191,7 +193,15 @@ module.exports = class Log {
                      this.sumField(sumField, event.source, event.amount);
                   break;
                case 'healing':
-                  if (sumField === 'healing' && event.amount > 0 && 'SPELL_HEAL' === event.event)
+                  if (event.amount > 0 && 'SPELL_HEAL' === event.event)
+                     this.sumField(sumField, event.source, event.amount - (event.overheal || 0));
+                  break;
+               case 'overheal':
+                  if (event.amount >= 0 && 'SPELL_HEAL' === event.event)
+                     this.sumField(sumField, event.source, (event.overheal || 0));
+                  break;
+               case 'heal+overheal':
+                  if (event.amount >= 0 && 'SPELL_HEAL' === event.event)
                      this.sumField(sumField, event.source, event.amount);
                   break;
                case 'count':
@@ -231,12 +241,10 @@ module.exports = class Log {
          obj[name] = defaultValue;
    }
 
-   getPrettyEntityName(entity, printGuid) {
+   getPrettyEntityName(entity, printGuid, noColor) {
       let summonedBy = this.summonedObjects[entity.guid];
-      if (summonedBy)
-         return this.getPrettyEntityName(summonedBy)
       const guidParts = entity.guid.split('-');
-      const color = guidParts.length == 3 ? c.blue : c.blueRed;
+      const color = noColor ? c.off : (guidParts.length == 3 ? c.blue : c.blueRed);
       let guidText = '';
       if (printGuid && guidParts.length == 7) {
          let id = this.guidMap[entity.guid];
@@ -247,7 +255,7 @@ module.exports = class Log {
          }
          guidText = ` (${id})`;
       }
-      return color + entity.name.split('-')[0] + c.off + guidText;
+      return (summonedBy ? this.getPrettyEntityName(summonedBy, printGuid, true) + "'s " : '') + color + entity.name.split('-')[0] + c.off + (entity.mcBy ? ` [${c.cyanBright}${entity.mcBy}${c.off}]` : '') + guidText;
    }
 
    printPretty(lineNumber, event, customFuncResult, printTimeDiff) {
@@ -275,11 +283,11 @@ module.exports = class Log {
       s += `  ${c.grayDark}${event.event}`.padEnd(40);
 
       if (event.event === 'ENCOUNTER_START') {
-         if (this.options['encounter'])
+         if (!this.options['printraw'] && (this.options['encounter'] || customFuncResult.printPretty))
             console.log(s + `🟩 ------- Encounter Start: ${c.gray}${event.encounterName}${c.grayDark} #${this.report.encounters[event.encounterName]} -------` + c.off);
          return;
       } else if (event.event === 'ENCOUNTER_END') {
-         if (this.options['encounter']) 
+         if (!this.options['printraw'] && (this.options['encounter'] || customFuncResult.printPretty)) 
             console.log(s + `🟥 ------- Encounter End: ${c.gray}${event.encounterName}${c.grayDark} #${this.report.encounters[event.encounterName]} -------` + c.off);
          return;
       }
@@ -291,8 +299,11 @@ module.exports = class Log {
             if (this.options['spellid'])
                s += ` ${c.gray}(${event.spell.id})`;
          }
-         if (event.spellName)
+         if (event.spellName) {
             s += ` ${c.orange}${event.spellName}`;
+            if (this.options['spellid'] && event.spellId)
+               s += ` ${c.gray}(${event.spellId})`;
+         }
       }
 
       if (event.event === 'SPELL_EXTRA_ATTACKS') {
@@ -342,8 +353,11 @@ module.exports = class Log {
             s += ` ${this.getPrettyEntityName(event.source, printGuid)}`;
          if (event.event === 'SPELL_DISPEL')
             s += ` ${c.gray}dispelled`
-         if (event.eventSuffix != 'INTERRUPT' && event.extraSpellName)
+         if (event.eventSuffix != 'INTERRUPT' && event.extraSpellName) {
             s += ` ${c.orange}${event.extraSpellName}`;
+            if (this.options['spellid'])
+               s += ` ${c.gray}(${event.extraSpellId})`;
+         }
          if (event.eventSuffix == 'AURA_BROKEN_SPELL')
             s += ` ${c.redDark}broke`;
          if (event.eventSuffix == 'SUMMON') {
@@ -365,10 +379,12 @@ module.exports = class Log {
                if (event.event === 'SPELL_DISPEL')
                   s += ` ${c.gray}using`
                s += ` ${c.orange}${event.spell.name}`;
+               if (this.options['spellid'])
+                  s += ` ${c.gray}(${event.spell.id})`;
                if (event.event === 'SPELL_DISPEL')
                   s += ` ${c.gray}on`
             }
-            if (event.spellName)
+            if (event.spellName) 
                s += ` ${c.orange}${event.spellName}`;
          }
          if (event.eventSuffix == 'ABSORBED')
@@ -389,14 +405,17 @@ module.exports = class Log {
             if (event.event == 'UNIT_DIED')
                s += ` ${c.red}died ☠️`;
          }
-         if (event.eventSuffix == 'INTERRUPT' && event.extraSpellName)
+         if (event.eventSuffix == 'INTERRUPT' && event.extraSpellName) {
             s += ` ${c.orange}${event.extraSpellName}`;
+            if (this.options['spellid'])
+               s += ` ${c.gray}(${event.extraSpellId})`;
+         }
          if (event.amount > 0 && !isSpellEnergize) {
             let hittype = [];
             if (event.critical) hittype.push('critical');
             if (event.crushing) hittype.push('crushing');
             if (event.glancing) hittype.push('glancing');
-            s += ` ${c.gray}for ${amountColor}${event.amount}${c.gray}${hittype.length ? ` (${hittype.join(', ')})` : ''}`;
+            s += ` ${c.gray}for ${amountColor}${event.amount - (event.overheal || 0)}${c.gray}${hittype.length ? ` (${hittype.join(', ')})` : ''}`;
             if (event.eventSuffix != 'HEAL') {
                if (event.event != 'SPELL_ENERGIZE') {
                   if (event.absorbedSpell)

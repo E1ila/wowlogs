@@ -31,8 +31,7 @@ let playerDeaths = 0;
 let wipe = true;
 let decurses = {};
 
-const FrostAuraDmgSpellId = 348191;
-const FrostBreathSpellId = 28524;
+const FrostboltSpellId = 28479;
 const GreaterFrostProtSpellId = 17544;
 const FrostProtSpellId = 7239;
 
@@ -57,12 +56,19 @@ module.exports = {
    * @param lastEvent object
    */
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
-      if (!currentEncounter || currentEncounter.encounterId != 1119)
+      if (!currentEncounter || currentEncounter.encounterId != 1114)
          return;
 
       let result = {printPretty: false};
       const spellEvent = ['SPELL_DAMAGE', 'SPELL_MISSED'].indexOf(event.event);
       
+      if (event.target && event.target.guid.indexOf('Player-') === 0) {
+         const player = players[event.target.guid];
+         if (!player)
+            throw new Error(`Can't find player with event.target.guid ${event.target.guid}`);
+         player.name = event.target.name;
+      }
+
       if (event.event === 'ENCOUNTER_START') {
          airPhases = 0;
          players = {};
@@ -113,14 +119,11 @@ module.exports = {
             player.fpp += 1;
       } 
       else if (  spellEvent != -1 && 
-         event.spell && FrostAuraDmgSpellId === event.spell.id && 
+         event.spell && FrostboltSpellId === event.spell.id && 
          event.source.name === currentEncounter.encounterName &&
          event.target && event.target.guid.indexOf('Player-') === 0) {
             
             const player = players[event.target.guid];
-            if (!player)
-               throw new Error(`Can't find player with event.target.guid ${event.target.guid}`);
-            player.name = event.target.name;
             player.ticks += 1;
             playerByName[player.name] = player;
             
@@ -135,10 +138,6 @@ module.exports = {
                player.resisted += 600; // Frost Aura full damage
             }
          } 
-         else if (event.event === 'SPELL_CAST_SUCCESS' && event.spell && event.spell.id === FrostBreathSpellId) {
-            airPhases++;
-            result.printPretty = true;
-         }
          
          return result;
       },
@@ -181,7 +180,7 @@ module.exports = {
                }
             }
          }
-         const playerSortScore = (player) => (player.fr);
+         const playerSortScore = (player) => (player.resisted);
          rows = rows.sort((a, b) => playerSortScore(b[8]) - playerSortScore(a[8]));
          rows.forEach(row => {
             if (row.length) {

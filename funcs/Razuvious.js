@@ -8,10 +8,14 @@ const PlayerSpells = {1857: "Vanish"};
 let firstMC = undefined;
 let understudyName = undefined;
 let razuviousName = undefined;
+let lastRazTarget = undefined;
+
+let mc = {};
 
 const MIND_CONTROL = 10912;
 const UNDERSTUDY_TAUNT = 29060;
 const WARRIOR_TAUNT = 355;
+const DISRUPTING_SHOUT = 29107;
 
 module.exports = {
    /**
@@ -25,18 +29,27 @@ module.exports = {
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
       let result = {printPretty: false, finishNow: false};
       options['guid'] = true;
+      const slim = options['params'].indexOf('slim') != -1;
 
       if (!firstMC && event.event === 'SPELL_CAST_SUCCESS' && event.target && event.spell && event.spell.id === MIND_CONTROL) {
          const targetParts = event.target.guid.split('-');
          if (targetParts.length === 7 && targetParts[5] === '16803') {
             result.printPretty = true;
+            mc[event.target.guid] = {by: event.source.name, time: +event.date};
             firstMC = event;
             understudyName = event.target.name;
          }
       }
 
-      if (event.event === 'ENCOUNTER_END')
+      if (event.event === 'ENCOUNTER_END') {
          firstMC = undefined;
+         mc = {};
+         result.printPretty = true;
+      }
+
+      if (event.event === 'ENCOUNTER_START' && event.encounterId === 1113) {
+         result.printPretty = true;
+      }
 
       if (event.event === 'UNIT_DIED' && event.target.name === razuviousName) {
          result.printPretty = true;
@@ -46,15 +59,48 @@ module.exports = {
       if (!currentEncounter || currentEncounter.encounterId !== 1113)
          return result;
 
+      let trackedTaunts = slim ? [UNDERSTUDY_TAUNT] : [WARRIOR_TAUNT, UNDERSTUDY_TAUNT];
+
       if (!razuviousName)
          razuviousName = currentEncounter.encounterName;
 
-      if (event.event === 'UNIT_DIED' && event.source.name === understudyName) {
+      if (event.event === 'UNIT_DIED' && !slim) {
          result.printPretty = true;
       }
 
-      if (event.spell && [MIND_CONTROL, UNDERSTUDY_TAUNT, WARRIOR_TAUNT].indexOf(event.spell.id) != -1) {
+      if (event.spell && event.spell.id === MIND_CONTROL && event.target.name != event.source.name && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) != -1) {
          result.printPretty = true;
+         const mcdata = mc[event.target.guid];
+         if (event.event === 'SPELL_AURA_APPLIED') {
+            if (mcdata) 
+               result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${mcdata.by}${c.off}`;
+            mc[event.target.guid] = {by: event.source.name, time: +event.date};
+         } else if (event.event === 'SPELL_AURA_REMOVED') {
+            result.extraText = `${c.cyan}MC lasted ${(+event.date-mcdata.time)/1000} sec${c.off}`;
+            mcdata.time = +event.date;
+         } else if (event.event === 'SPELL_MISSED' && event.missType === 'IMMUNE' && mc[event.target.guid]) {
+            result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${mcdata.by}${c.off}`;
+         }
+      }
+
+      if (event.target && mc[event.target.guid]) 
+         event.target.mcBy = mc[event.target.guid].by;
+
+      if (event.source && mc[event.source.guid]) 
+         event.source.mcBy = mc[event.source.guid].by;
+
+      if (event.spell && trackedTaunts.indexOf(event.spell.id) != -1 && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) != -1) { 
+         if (event.spell.id != WARRIOR_TAUNT || event.event != 'SPELL_AURA_REMOVED')
+            result.printPretty = true;
+      }
+
+      if (event.spell && event.spell.id === DISRUPTING_SHOUT && !slim) {
+         result.printPretty = true;
+      }
+      else if (event.source && event.target && event.target.name && event.source.name === razuviousName && event.target.name != lastRazTarget && !slim) {
+         lastRazTarget = event.target.name;
+         result.printPretty = true;
+         console.log(` -- ${c.orangeBright}${razuviousName} attacks ${event.target.name}${c.off}`);
       }
 
       return result;
