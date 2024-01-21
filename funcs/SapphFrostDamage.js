@@ -181,7 +181,7 @@ module.exports = {
                }
             }
          }
-         const playerSortScore = (player) => (player.fr);
+         const playerSortScore = (player) => (player.resisted + player.absorbed);
          rows = rows.sort((a, b) => playerSortScore(b[8]) - playerSortScore(a[8]));
          rows.forEach(row => {
             if (row.length) {

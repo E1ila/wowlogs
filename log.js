@@ -10,6 +10,8 @@ const IgnoreFails = [
    "Out of range",
 ];
 
+const Heals = {};
+
 module.exports = class Log {
 
    constructor(filename, options, report, customFunc) {
@@ -143,6 +145,9 @@ module.exports = class Log {
          if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
             return;
 
+         if (this.options['heals'] && !(event.spell && consts.Heals[event.spell.id]))
+            return;
+
          if (this.options['minamount'] && event.amount <= +this.options['minamount'])
             return;
 
@@ -193,7 +198,7 @@ module.exports = class Log {
                      this.sumField(sumField, event.source, event.amount);
                   break;
                case 'healing':
-                  if (event.amount > 0 && 'SPELL_HEAL' === event.event)
+                  if (event.amount > 0 && 'SPELL_HEAL' === event.event) 
                      this.sumField(sumField, event.source, event.amount - (event.overheal || 0));
                   break;
                case 'overheal':
@@ -264,23 +269,38 @@ module.exports = class Log {
          // case 'SPELL_EXTRA_ATTACKS':
          case 'SPELL_AURA_APPLIED_DOSE':
          case 'SPELL_AURA_REFRESH':
-         case 'SPELL_CAST_START':
          case 'COMBATANT_INFO':
          case 'SPELL_PERIODIC_ENERGIZE':
             return;
       }
 
-      if (event.event === 'SWING_DAMAGE' && !this.options['swing'])
-         return;
+      let isSpellEnergize = false;
+      let eventColor = c.grayDark;
+      switch (event.event) {
+         case 'SPELL_CAST_START':
+            if (!this.options['caststart'])
+               return;
+            eventColor = c.purpleDark;
+            break;
+         case 'SWING_DAMAGE':
+            if (!this.options['swing'])
+               return;
+            break;
+         case 'SPELL_ENERGIZE':
+            isSpellEnergize = true;
+            break;
+         case 'SPELL_HEAL':
+            Heals[event.spell.id] = event.spell.name;
+            break;
+      }
 
-      const isSpellEnergize = event.event == 'SPELL_ENERGIZE';
       let s = `${c.grayDark}${('' + lineNumber).padStart(10)}   ${event.dateStr} `;
       if (printTimeDiff) {
          let diff = this.lastEventTime ? (+event.date - this.lastEventTime) / 1000 : 0;
          s += `  ${diff}`.padStart(10);
          this.lastEventTime = +event.date;
       }
-      s += `  ${c.grayDark}${event.event}`.padEnd(40);
+      s += `  ${eventColor}${event.event}`.padEnd(40);
 
       if (event.event === 'ENCOUNTER_START') {
          if (!this.options['printraw'] && (this.options['encounter'] || customFuncResult.printPretty))
@@ -371,7 +391,7 @@ module.exports = class Log {
             s += ` ${c.orange}${event.absorbedSpell.name}`;
          } else {
             if (!event.target || !event.target.name)
-               s += ` ${c.gray}performs`;
+               s += ` ${c.gray}${event.event === 'SPELL_CAST_START' ? 'starts casting' : 'performs'}`;
             else if (isSpellEnergize) {
                s += ` ${c.gray}gains ${c.greenDark}${event.amount} ${c.gray}energy from`;
             }
@@ -473,5 +493,7 @@ module.exports = class Log {
                console.log(`  ${pair[2].toLocaleString('en').padStart(12)}  ${('' + pair[1]).padStart(6)}  ${this.options['dmgheal'] ? (''+Math.round(pair[2]/seconds)).padStart(8)+'  ' : ''}${pair[0]}`);
          }
       }
+
+      console.log(JSON.stringify(Heals));
    }
 }
