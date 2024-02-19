@@ -48,6 +48,7 @@ program
    .option('--print', 'Print pretty parsed events')
    .option('--printobj', 'Print parsed events')
    .option('--printraw', 'Print pretty parsed events')
+   .option('--resists', 'Calculate resists stats')
    .option('--source <name>', 'Show only events made by this player')
    .option('--spell <name>', 'Show only this spell')
    .option('--spellid', 'Print also spell ID')

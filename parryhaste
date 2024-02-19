@@ -1,4 +1,4 @@
-BOSS=Ebonroc
+BOSS=Sapphiron
 ./wowlog.js $1 $2 $3 $4 $5 $6 --printraw --source "$BOSS" --filter SWING_DAMAGE_LANDED,SWING_MISSED,SPELL_EXTRA_ATTACKS > ~/tmp/1
 ./wowlog.js $1 $2 $3 $4 $5 $6 --miss PARRY --printraw --target "$BOSS" --filter SWING_MISSED >> ~/tmp/1
 sort ~/tmp/1 | ./wowlog.js - --print --timediff

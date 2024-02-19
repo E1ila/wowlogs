@@ -5,7 +5,7 @@ const c = require("../colors");
 
 const MEDIAN_FILTER_THRESHOLD = 1.5;
 const THRASH_PROC_THRESHOLD = 45 / 1000;
-const MAX_SWING = 2.25;
+const MAX_SWING = 2.7;
 const MAX_VALID_DELTA = 10;
 
 let lastSwing = 0;

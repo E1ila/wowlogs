@@ -30,6 +30,8 @@ let fightEnd = 0;
 let playerDeaths = 0;
 let wipe = true;
 let decurses = {};
+let lineEvents = [];
+let lastSapphMelee = 0;
 
 const FrostAuraDmgSpellId = 348191;
 const FrostBreathSpellId = 28524;
@@ -64,6 +66,7 @@ module.exports = {
       const spellEvent = ['SPELL_DAMAGE', 'SPELL_MISSED'].indexOf(event.event);
       
       if (event.event === 'ENCOUNTER_START') {
+         lineEvents = [[lineNumber, 'Encounter start']];
          airPhases = 0;
          players = {};
          playerByName = {};
@@ -72,6 +75,7 @@ module.exports = {
          wipe = true;
       }
       else if (event.event === 'ENCOUNTER_END') {
+         lineEvents.push([lineNumber, 'Encounter end']);
          if (!fightEnd || !wipe)
          fightEnd = event.date;
       }
@@ -96,6 +100,11 @@ module.exports = {
             fr += +item[frostResColumn];
          }
          players[event.playerGuid] = {fr, absorbed: 0, resisted: 0, damage: 0, ticks: 0, died: null, fpp: 0, gfpp: 0, guid: event.playerGuid};
+      }
+      else if (event.event === 'SWING_DAMAGE' && event.source && event.source.name === currentEncounter.encounterName) {
+         if (!lastSapphMelee)
+            lineEvents.push([lineNumber, 'Ground phase']);            
+         lastSapphMelee = lineNumber;
       }
       else if (event.event === 'SPELL_DISPEL' && event.source && event.target) { //  && eligable[event.source.name]
          // result.printPretty = true;
@@ -136,6 +145,8 @@ module.exports = {
             }
          } 
          else if (event.event === 'SPELL_CAST_SUCCESS' && event.spell && event.spell.id === FrostBreathSpellId) {
+            lineEvents.push([lastSapphMelee + 1000, 'Air phase']);
+            lastSapphMelee = 0;
             airPhases++;
             result.printPretty = true;
          }
@@ -243,6 +254,7 @@ module.exports = {
          //    console.log(`${row[0]} ${row[1].toLocaleString().padEnd(6)} ${row[2].toLocaleString().padEnd(6)} `);
          // });
          
+         console.log(`\nImportant events: \n${lineEvents.map(o => o.join(' ')).join('\n')}`)
       },
    }
    

@@ -10,8 +10,6 @@ const IgnoreFails = [
    "Out of range",
 ];
 
-const Heals = {};
-
 module.exports = class Log {
 
    constructor(filename, options, report, customFunc) {
@@ -23,6 +21,7 @@ module.exports = class Log {
       this.summonedObjects = {};
       this.guidMap = {};   // mob guid -> id
       this.guidCount = {}; // mob name -> id count
+      this.resistStats = {};
 
       if (options['lines']) {
          let separator = '-';
@@ -289,9 +288,9 @@ module.exports = class Log {
          case 'SPELL_ENERGIZE':
             isSpellEnergize = true;
             break;
-         case 'SPELL_HEAL':
-            Heals[event.spell.id] = event.spell.name;
-            break;
+         // case 'SPELL_HEAL':
+         //    Heals[event.spell.id] = event.spell.name;
+         //    break;
       }
 
       let s = `${c.grayDark}${('' + lineNumber).padStart(10)}   ${event.dateStr} `;
@@ -456,6 +455,12 @@ module.exports = class Log {
                s += ` ${c.gray}(${event.absorbed} absorbed)`;
             if (event.overheal > 0)
                s += ` ${c.gray}(${event.overheal} overheal)`;
+
+            if (this.options['resists']) {
+               const resistRatio = (event.resisted || 0) / (event.amount + (event.resisted || 0) + (event.absorbed || 0));
+               const key = ''+Math.round(resistRatio*4)/4;
+               this.resistStats[key] = (this.resistStats[key] || 0) + 1;
+            }
          }
          if (event.eventSuffix == 'CAST_FAILED') {
             s += ` ${c.gray}failed`;
@@ -494,6 +499,16 @@ module.exports = class Log {
          }
       }
 
-      console.log(JSON.stringify(Heals));
+      if (this.options['resists']) {
+         console.log(`Resists:}`);
+         let total = 0;
+         for (let key in this.resistStats) 
+            total += this.resistStats[key];
+         for (let key in this.resistStats) {
+            console.log(`   ${key.padStart(5)} ${(''+Math.round(this.resistStats[key]/total*100)).padStart(5)}%  (${this.resistStats[key]})`);
+         }
+      }
+
+      // console.log(JSON.stringify(Heals));
    }
 }

@@ -1,0 +1,1 @@
+find /Applications/wow/_classic_era_/Logs/ -name "*Naxx*.txt" -exec cat {} + | ./wowlog.js - $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13

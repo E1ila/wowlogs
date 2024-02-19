@@ -33,6 +33,11 @@ const Totems = {
    8181: "FrR R1",
    8166: "Poison",
    8170: "Disease",
+   5394: "Healing R1",
+   6375: "Healing R2",
+   6377: "Healing R3",
+   10462: "Healing R4",
+   10463: "Healing R5",
 };
 const totalTotems = {};
 
