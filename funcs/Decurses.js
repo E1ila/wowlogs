@@ -20,6 +20,7 @@ module.exports = {
     * @param lineNumber of processed event
     * @param event object
     * @param lastEvent object
+    * @param currentEncounter object
     */
    processEvent: function (log, options, lineNumber, event, lastEvent, currentEncounter) {
       let result = {printPretty: false};
@@ -35,9 +36,10 @@ module.exports = {
          if (event.target.guid.indexOf('Player-') === 0) {
             playerDeaths += 1;
             const player = players[event.target.guid];
-            player.died = event.date;
+            if (player)
+               player.died = event.date;
             fightEnd = event.date;
-         } else if (event.target.name === currentEncounter.encounterName)
+         } else if (currentEncounter && event.target.name === currentEncounter.encounterName)
             wipe = false;
       }
       return result;

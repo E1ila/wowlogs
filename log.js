@@ -61,16 +61,17 @@ module.exports = class Log {
             lineNumber++;
             if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
                const data = line.split('  ')[1].split(',');
+               const build = data[5].split('.');
                versionData = {
                   version: parseFloat(data[1]),
-                  advanced: data[3] == '1',
-                  build: data[5],
+                  advanced: data[3] === '1',
+                  build: parseFloat(build[0] + '.' + build[1] + build[2].padStart(2, '0')),
                   projectId: parseFloat(data[7]),
                }
             } else {
                let event;
                try {
-                  event = parser.line(lineNumber, line, versionData.version);
+                  event = parser.line(lineNumber, line, versionData);
                } catch (e) {
                   if (e.message.indexOf('Unsupported version:') !== -1) {
                      if (!this.options['ignoreVerErr'])
@@ -155,7 +156,7 @@ module.exports = class Log {
                return;
          }
          let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
-         let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target']));
+         let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target'] || this.options['target'].toLowerCase() === 'player' && event.target.guid.indexOf('Player-') === 0));
          let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
          if (event.event != 'COMBATANT_INFO' && (!unitDied || !this.options['encounter'])) {
             if (this.options['stand'] || !this.options['source'] || !this.options['target']) {

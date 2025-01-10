@@ -58,7 +58,8 @@ parse.power = (power) => {
       if (power.isNaN) throw new TypeError('power has wrong format.')
    }
    if (power < -2 || power > c.powers.length - 3 || c.powers[power + 2] === '') {
-      throw new TypeError('power #' + power + ' is not valid');
+      return `??${power + 2}`
+      // throw new TypeError('power #' + power + ' is not valid');
    }
    return c.powers[power + 2]
 }
@@ -78,13 +79,14 @@ parse.date = (d) => {
 
 /**
  * parse a single line and return it as Object
+ * @param  {number} lineNumber    line from the WoWCombatLog.txt
  * @param  {String} line    line from the WoWCombatLog.txt
- * @param  {Integer} version Log version. Ignored for now.
+ * @param  {Object} versionData { version, advanced, build }
  * @return {Object}         Object representation of line
  */
-parse.line = (lineNumber, line, version) => {
-   if (version < 9)
-      throw new Error("Unsupported version: " + version);
+parse.line = (lineNumber, line, versionData) => {
+   if (versionData.version < 9)
+      throw new Error("Unsupported version: " + versionData.version);
    if (!line || !line.split)
       throw new Error(`Line ${lineNumber} doesn't have split func: ${line}`);
 
@@ -213,10 +215,12 @@ parse.line = (lineNumber, line, version) => {
       o.eventSuffix = o.event.split('_').splice(1).join('_')
    }
 
+   let elementsToSkip = versionData.build >= 1.15 ? 18 : 16;
+
    switch (o.eventSuffix) {
       case 'DAMAGE':
       case 'DAMAGE_LANDED':
-         o.perspective = extractPerspective(l);
+         o.perspective = extractPerspective(l, versionData);
          o.amount = parseInt(l.shift()) // the damage player will see on his UI
          o.baseAmount = parseInt(l.shift()) // damage before crit and before absorbtion
          o.overkill = parseInt(l.shift()) // wasted damage points, -1 = no overkill
@@ -227,6 +231,7 @@ parse.line = (lineNumber, line, version) => {
          o.critical = l.shift() === '1';
          o.glancing = l.shift() === '1';
          o.crushing = l.shift() === '1';
+         o.aoe = l.shift() === 'AOE'; // ST (single target), or AOE
          break
       case 'MISSED':
          o.missType = l.shift() // MISS / ABSORBED
@@ -235,20 +240,20 @@ parse.line = (lineNumber, line, version) => {
          o.baseAmount = parseInt(l.shift()) // intended damage, before crit mul, before reductions and absorbtion
          break
       case 'HEAL':
-         o.amount = parseInt(l.mshift(16)) // the damage player will see on his UI
+         o.amount = parseInt(l.mshift(elementsToSkip)) // the damage player will see on his UI
          o.baseAmount = parseInt(l.shift()) // damage before crit and before absorbtion
          o.overheal = parseInt(l.shift())
          o.absorbed = l.shift() === '1'
          o.critical = l.shift() === '1'
          break
       case 'ENERGIZE':
-         o.amount = parseInt(l.mshift(16)) // the damage player will see on his UI
+         o.amount = parseInt(l.mshift(elementsToSkip)) // the damage player will see on his UI
          o.overflow = parseInt(l.shift()) // the damage player will see on his UI
          o.powerType = parse.power(l.shift()) // mana / rage / health / etc..
          break
       case 'LEECH':
       case 'DRAIN': // need to verify
-         o.amount = parseInt(l.mshift(16));
+         o.amount = parseInt(l.mshift(elementsToSkip));
          o.powerType = parse.power(l.shift());
          o.extraAmount = parseInt(l.shift());
          break;
@@ -301,7 +306,7 @@ parse.line = (lineNumber, line, version) => {
          o.spellId = parseInt(l.shift());
          o.spellName = l.shift().replace(/"/g, '');
          o.school = parse.school(parseHex(l.shift()));
-         o.amount = parseInt(l.mshift(16));
+         o.amount = parseInt(l.mshift(elementsToSkip));
          // damage type? melee / spell
          break;
       case 'SHIELD_MISSED':
@@ -325,7 +330,6 @@ parse.line = (lineNumber, line, version) => {
       case 'DURABILITY_DAMAGE_ALL':
       default:
          throw new Error('unrecognized event suffix ' + o.eventSuffix)
-         break
    }
 
    return o;
@@ -357,8 +361,8 @@ function extractSpell(l) {
    }
 }
 
-function extractPerspective(l) {
-   return {
+function extractPerspective(l, versionData) {
+   const x = {
       "guid": l.shift(),
       "p1": l.shift(),
       "p2": parseInt(l.shift()),
@@ -376,6 +380,11 @@ function extractPerspective(l) {
       "p14": parseFloat(l.shift()),
       "p15": parseInt(l.shift()),
    }
+   if (versionData.build >= 1.15) {
+      x["p16"] = parseInt(l.shift());
+      x["p17"] = parseInt(l.shift());
+   }
+   return x;
 }
 
 module.exports = parse
