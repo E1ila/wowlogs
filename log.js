@@ -1,4 +1,4 @@
-const readline = require('readline');
+const readlinePromises = require('readline/promises');
 const fs = require('fs');
 const parser = require('./parser');
 const consts = require('./consts');
@@ -25,85 +25,80 @@ module.exports = class Log {
 
       if (options['lines']) {
          let separator = '-';
-         if (options['lines'].indexOf('+') != -1) {
+         if (options['lines'].indexOf('+') !== -1) {
             separator = '+';
             this.lineEndSeconds = true;
          }
          const parts = options['lines'].split(separator);
          this.lineStart = +parts[0];
-         if (parts.length == 1)
+         if (parts.length === 1)
                this.lineEnd = this.lineStart;
          else
-            this.lineEnd = parts[1] == '' ? undefined : +parts[1];
+            this.lineEnd = parts[1] === '' ? undefined : +parts[1];
       }
 
       this.initResult();
    }
 
-   process() {
-      return new Promise((resolve, reject) => {
-         let versionData = {
-            version: 9,
-            advanced: true,
-            build: "1.15.0",
-            projectId: 2,
-         };
-         let lineNumber = 0;
-         let lastEvent;
+   async process() {
+      let versionData = {
+         version: 9,
+         advanced: true,
+         build: "1.15.0",
+         projectId: 2,
+      };
+      let lineNumber = 0;
+      let lastEvent;
 
-         const readInterface = readline.createInterface({
-            input: this.filename ? fs.createReadStream(this.filename) : process.stdin,
-            // output: process.stdout,
-            console: false
-         });
-
-         readInterface.on('line', line => {
-            lineNumber++;
-            if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
-               const data = line.split('  ')[1].split(',');
-               const build = data[5].split('.');
-               versionData = {
-                  version: parseFloat(data[1]),
-                  advanced: data[3] === '1',
-                  build: parseFloat(build[0] + '.' + build[1] + build[2].padStart(2, '0')),
-                  projectId: parseFloat(data[7]),
-               }
-            } else {
-               let event;
-               try {
-                  event = parser.line(lineNumber, line, versionData);
-               } catch (e) {
-                  if (e.message.indexOf('Unsupported version:') !== -1) {
-                     if (!this.options['ignoreVerErr'])
-                        console.error(e.message);
-                     return reject('Unsupported combat log version');
-                  } else {
-                     console.error(line);
-                     console.error(`Failed parsing line #${lineNumber}: ${e.stack}`);
-                  }
-               }
-               if (event) {
-                  try {
-                     const finishNow = this.processEvent(lineNumber, event, lastEvent, line);
-                     if (finishNow)
-                        readInterface.close();
-                  } catch (e) {
-                     console.error(`#${lineNumber} EVENT ` + JSON.stringify(event));
-                     console.error(`Failed processing event #${lineNumber}: ${e.stack}`);
-                  }
-               }
-               lastEvent = event;
-            }
-         });
-
-         readInterface.on('close', line => {
-            this.finish();
-            resolve();
-         });
+      const readInterface = readlinePromises.createInterface({
+         input: this.filename ? fs.createReadStream(this.filename) : process.stdin,
+         // output: process.stdout,
+         console: false
       });
+
+      for await (const line of readInterface) {
+         lineNumber++;
+         if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
+            const data = line.split('  ')[1].split(',');
+            const build = data[5].split('.');
+            versionData = {
+               version: parseFloat(data[1]),
+               advanced: data[3] === '1',
+               build: parseFloat(build[0] + '.' + build[1] + build[2].padStart(2, '0')),
+               projectId: parseFloat(data[7]),
+            }
+         } else {
+            let event;
+            try {
+               event = parser.line(lineNumber, line, versionData);
+            } catch (e) {
+               if (e.message.indexOf('Unsupported version:') !== -1) {
+                  if (!this.options['ignoreVerErr'])
+                     console.error(e.message);
+                  throw new Error('Unsupported combat log version');
+               } else {
+                  console.error(line);
+                  console.error(`Failed parsing line #${lineNumber}: ${e.stack}`);
+               }
+            }
+            if (event) {
+               try {
+                  let finishNow = await this.processEvent(lineNumber, event, lastEvent, line).then();
+                  if (finishNow)
+                     readInterface.close();
+               } catch (e) {
+                  console.error(`#${lineNumber} EVENT ` + JSON.stringify(event));
+                  console.error(`Failed processing event #${lineNumber}: ${e.stack}`);
+               }
+            }
+            lastEvent = event;
+         }
+      }
+
+      this.finish();
    }
 
-   processEvent(lineNumber, event, lastEvent, rawLine) {
+   async processEvent(lineNumber, event, lastEvent, rawLine) {
       let encounterStartOrStop = false;
       let endedEncounter = null;
       if (event.event === 'ENCOUNTER_START') {
@@ -172,8 +167,9 @@ module.exports = class Log {
          console.log(`#${lineNumber} EVENT ` + JSON.stringify(event));
 
       let customFuncResult = {};
-      if (this.customFunc)
-         customFuncResult = this.customFunc.processEvent(this, this.options, lineNumber, event, lastEvent, this.currentEncounter);
+      if (this.customFunc) {
+         customFuncResult = await this.customFunc.processEvent(this, this.options, lineNumber, event, lastEvent, this.currentEncounter, rawLine);
+      }
 
       if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);

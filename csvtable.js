@@ -91,7 +91,7 @@ module.exports = class CsvTable {
      */
     get(field, value) {
         const pos = this.headers.indexOf(field);
-        if (pos != -1) 
+        if (pos !== -1)
             return this.byUniqueField[field][value];
         return null;
     }
