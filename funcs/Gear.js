@@ -6,6 +6,7 @@ const path = require("path");
 const
    COMBATANT_INFO = "COMBATANT_INFO",
    ItemCache = {},
+   playerNames = {},
    uniqueFilter = (value, index, self) =>  self.indexOf(value) === index,
    ItemDBColumns = [
       "entry","patch","class","subclass","name","description","display_id","quality","flags",
@@ -178,19 +179,24 @@ module.exports = {
          await this.itemdb.read(path.join(__dirname, '..', 'items.csv.gz'), ['entry']);
       }
 
+      if (event.source && event.source.guid && !playerNames[event.source.guid]) {
+         playerNames[event.source.guid] = event.source.name;
+      }
       if (event.event === COMBATANT_INFO) {
-         const gear = await praseGear(itemId => {
-            try {
-               return this.itemdb.get("entry", itemId);
-            } catch (e) {
-               console.log(`Item ${itemId} not found`);
-            }
-         }, event.playerEquippedGear);
-         let table = new Table({
-            head: ['Slot', 'Item', 'iLevel'],
-         });
-         gear.forEach(g => table.push(g));
-         console.log(table.toString());
+         if (!options.params.length || playerNames[event.playerGuid] && playerNames[event.playerGuid].toLowerCase().indexOf(options.params[0].toLowerCase()) === 0) {
+            const gear = await praseGear(itemId => {
+               try {
+                  return this.itemdb.get("entry", itemId);
+               } catch (e) {
+                  console.log(`Item ${itemId} not found`);
+               }
+            }, event.playerEquippedGear);
+            let table = new Table({
+               head: ['Slot', 'Item', 'iLevel'],
+            });
+            gear.forEach(g => table.push(g));
+            console.log(table.toString());
+         }
       }
    },
 

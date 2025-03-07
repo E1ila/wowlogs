@@ -31,7 +31,13 @@ module.exports = {
       options['guid'] = true;
       const slim = options['params'].indexOf('slim') != -1;
 
-      if (!firstMC && event.event === 'SPELL_CAST_SUCCESS' && event.target && event.spell && event.spell.id === MIND_CONTROL) {
+      if (
+         !firstMC
+         && event.event === 'SPELL_CAST_SUCCESS'
+         && event.target
+         && event.spell
+         && event.spell.id === MIND_CONTROL
+      ) {
          const targetParts = event.target.guid.split('-');
          if (targetParts.length === 7 && targetParts[5] === '16803') {
             result.printPretty = true;
@@ -68,7 +74,12 @@ module.exports = {
          result.printPretty = true;
       }
 
-      if (event.spell && event.spell.id === MIND_CONTROL && event.target.name != event.source.name && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) != -1) {
+      if (
+         event.spell
+         && event.spell.id === MIND_CONTROL
+         && event.target.name !== event.source.name
+         && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) !== -1
+      ) {
          result.printPretty = true;
          const mcdata = mc[event.target.guid];
          if (event.event === 'SPELL_AURA_APPLIED') {
@@ -89,15 +100,28 @@ module.exports = {
       if (event.source && mc[event.source.guid]) 
          event.source.mcBy = mc[event.source.guid].by;
 
-      if (event.spell && trackedTaunts.indexOf(event.spell.id) != -1 && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) != -1) { 
-         if (event.spell.id != WARRIOR_TAUNT || event.event != 'SPELL_AURA_REMOVED')
+      if (
+         event.spell
+         && trackedTaunts.indexOf(event.spell.id) !== -1
+         && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) !== -1
+         && (!event.target || event.target.name !== 'Battle Chicken')
+      ) {
+         if (event.spell.id !== WARRIOR_TAUNT || event.event !== 'SPELL_AURA_REMOVED')
             result.printPretty = true;
       }
 
-      if (event.spell && event.spell.id === DISRUPTING_SHOUT && !slim) {
+      if (event.spell && event.spell.id === DISRUPTING_SHOUT && (!event.target || event.target.name !== 'Battle Chicken') && !slim) {
          result.printPretty = true;
       }
-      else if (event.source && event.target && event.target.name && event.source.name === razuviousName && event.target.name != lastRazTarget && !slim) {
+      else if (
+         event.source
+         && event.target
+         && event.target.name
+         && event.source.name === razuviousName
+         && event.target.name !== lastRazTarget
+         && event.target.name !== 'Battle Chicken'
+         && !slim
+      ) {
          lastRazTarget = event.target.name;
          result.printPretty = true;
          console.log(` -- ${c.orangeBright}${razuviousName} attacks ${event.target.name}${c.off}`);
