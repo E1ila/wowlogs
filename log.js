@@ -228,7 +228,7 @@ module.exports = class Log {
 
    initResult() {
       this.result = {};
-      if (this.options['sum'].length) {
+      if (this.options['sum'] && this.options['sum'].length) {
          this.options['sum'].forEach(field => field.toLowerCase());
          this.result.sum = {};
          for (let field of this.options['sum']) {

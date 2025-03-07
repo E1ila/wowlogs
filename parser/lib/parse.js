@@ -42,7 +42,8 @@ parse.school = (school) => {
       if (school.isNaN) throw new TypeError('school has wrong format.')
    }
    if (school < 1 || school > c.schools.length || c.schools[school - 1] === '') {
-      throw new TypeError('school #' + school + ' is not valid.')
+      if (![237].includes(school))
+         throw new TypeError('school #' + school + ' is not valid.')
    }
    return c.schools[school - 1]
 }
