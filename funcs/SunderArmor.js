@@ -18,6 +18,10 @@ const DemoShoutSpellId = {
    6190: 2,
    1160: 1,
 }
+const taunts = {};
+const TauntSpellId = {
+   355: 1,
+}
 
 module.exports = {
    /**
@@ -36,6 +40,9 @@ module.exports = {
 
       if (sourceIsPlayer && event.spell && DemoShoutSpellId[event.spell.id] && event.event === 'SPELL_CAST_SUCCESS') {
          demoShout[event.source.name] = (demoShout[event.source.name] || 0) + 1;
+      }
+      if (sourceIsPlayer && event.spell && TauntSpellId[event.spell.id] && event.event === 'SPELL_CAST_SUCCESS') {
+         taunts[event.source.name] = (taunts[event.source.name] || 0) + 1;
       }
 
       if (['SPELL_CAST_SUCCESS', 'SPELL_MISSED', 'SWING_DAMAGE'].indexOf(event.event) !== -1 && event.source && event.target && event.target.name && event.source.guid.indexOf('Player-') === 0) { // mobsToCheck.indexOf(event.target.name) !== -1
@@ -69,7 +76,7 @@ module.exports = {
       report.avgTimeToSunder = {};
 
       var table = new Table({
-         head: ['Sunders', 'Seconds', 'Player', 'Demo Shouts'],
+         head: ['Sunders', 'Seconds', 'Player', 'Demo Shouts', 'Taunts'],
       });
 
       let rows = [];
@@ -82,7 +89,7 @@ module.exports = {
          else if (playerTimeToSunder.length > 1)
             medianTime = playerTimeToSunder[Math.trunc(playerTimeToSunder.length / 2)];
          report.avgTimeToSunder[warriorName] = Math.trunc(medianTime) / 1000;
-         rows.push([playerTimeToSunder.length || 0, playerTimeToSunder.length ? report.avgTimeToSunder[warriorName] : '--', warriorName, demoShout[warriorName] || 0]);
+         rows.push([playerTimeToSunder.length || 0, playerTimeToSunder.length ? report.avgTimeToSunder[warriorName] : '--', warriorName, demoShout[warriorName] || 0, taunts[warriorName] || 0]);
       }
       rows = rows.sort((a, b) => b[0] - a[0]);
       rows.forEach(row => table.push(row));

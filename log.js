@@ -153,7 +153,7 @@ module.exports = class Log {
          let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
          let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target'] || this.options['target'].toLowerCase() === 'player' && event.target.guid.indexOf('Player-') === 0));
          let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
-         if (event.event != 'COMBATANT_INFO' && (!unitDied || !this.options['encounter'])) {
+         if (event.event !== 'COMBATANT_INFO' && (!unitDied || !this.options['encounter'])) {
             if (this.options['stand'] || !this.options['source'] || !this.options['target']) {
                if (!sourceMatch || !targetMatch) // AND condition between sournce and target
                   return;
@@ -171,8 +171,9 @@ module.exports = class Log {
          customFuncResult = await this.customFunc.processEvent(this, this.options, lineNumber, event, lastEvent, this.currentEncounter, rawLine);
       }
 
-      if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop))
-         this.printPretty(lineNumber, event, customFuncResult, this.options['timediff']);
+      if (this.options['print'] || customFuncResult && (customFuncResult.printPretty || encounterStartOrStop)) {
+         this.printPretty(lineNumber, event, customFuncResult, this.options['timediff'], customFuncResult && customFuncResult.printToStack);
+      }
 
       if (this.options['printraw'])
          console.log(rawLine);
@@ -259,7 +260,7 @@ module.exports = class Log {
       return (summonedBy ? this.getPrettyEntityName(summonedBy, printGuid, true) + "'s " : '') + color + entity.name.split('-')[0] + c.off + (entity.mcBy ? ` [${c.cyanBright}${entity.mcBy}${c.off}]` : '') + guidText;
    }
 
-   printPretty(lineNumber, event, customFuncResult, printTimeDiff) {
+   printPretty(lineNumber, event, customFuncResult, printTimeDiff, printToStack) {
       switch (event.event) {
          case 'SPELL_AURA_REMOVED_DOSE':
          // case 'SPELL_EXTRA_ATTACKS':
@@ -369,14 +370,14 @@ module.exports = class Log {
             s += ` ${this.getPrettyEntityName(event.source, printGuid)}`;
          if (event.event === 'SPELL_DISPEL')
             s += ` ${c.gray}dispelled`
-         if (event.eventSuffix != 'INTERRUPT' && event.extraSpellName) {
+         if (event.eventSuffix !== 'INTERRUPT' && event.extraSpellName) {
             s += ` ${c.orange}${event.extraSpellName}`;
             if (this.options['spellid'])
                s += ` ${c.gray}(${event.extraSpellId})`;
          }
-         if (event.eventSuffix == 'AURA_BROKEN_SPELL')
+         if (event.eventSuffix === 'AURA_BROKEN_SPELL')
             s += ` ${c.redDark}broke`;
-         if (event.eventSuffix == 'SUMMON') {
+         if (event.eventSuffix === 'SUMMON') {
             s += ` ${c.gray}summon`;
             if (event.target)
                this.summonedObjects[event.target.guid] = event.source;
@@ -403,22 +404,22 @@ module.exports = class Log {
             if (event.spellName) 
                s += ` ${c.orange}${event.spellName}`;
          }
-         if (event.eventSuffix == 'ABSORBED')
+         if (event.eventSuffix === 'ABSORBED')
             s += ` ${c.gray}absorbed by`;
-         if (event.eventSuffix == 'DAMAGE_LANDED' || event.event == 'DAMAGE_SHIELD')
+         if (event.eventSuffix === 'DAMAGE_LANDED' || event.event === 'DAMAGE_SHIELD')
             s += ` ${c.gray}hit`;
-         if (event.eventSuffix == 'MISSED')
+         if (event.eventSuffix === 'MISSED')
             s += ` ${c.gray}missed`;
-         if (event.eventSuffix == 'INTERRUPT')
+         if (event.eventSuffix === 'INTERRUPT')
             s += ` ${c.cyan}interrupted`;
-         if (event.eventSuffix == 'HEAL') {
+         if (event.eventSuffix === 'HEAL') {
             s += ` ${c.gray}healed`;
             amountColor = c.green;
          }
          if (event.target && event.target.name) {
-            if (!isSpellEnergize || event.target.name != event.source.name)
+            if (!isSpellEnergize || event.target.name !== event.source.name)
                s += ` ${this.getPrettyEntityName(event.target, printGuid)}`;
-            if (event.event == 'UNIT_DIED')
+            if (event.event === 'UNIT_DIED')
                s += ` ${c.red}died ☠️`;
          }
          if (event.eventSuffix == 'INTERRUPT' && event.extraSpellName) {
@@ -432,8 +433,8 @@ module.exports = class Log {
             if (event.crushing) hittype.push('crushing');
             if (event.glancing) hittype.push('glancing');
             s += ` ${c.gray}for ${amountColor}${event.amount - (event.overheal || 0)}${c.gray}${hittype.length ? ` (${hittype.join(', ')})` : ''}`;
-            if (event.eventSuffix != 'HEAL') {
-               if (event.event != 'SPELL_ENERGIZE') {
+            if (event.eventSuffix !== 'HEAL') {
+               if (event.event !== 'SPELL_ENERGIZE') {
                   if (event.absorbedSpell)
                      s += ` ${c.gray}${event.absorbedSpell.school.toLowerCase()} damage`;
                   else if (event.spell)
@@ -459,7 +460,7 @@ module.exports = class Log {
                this.resistStats[key] = (this.resistStats[key] || 0) + 1;
             }
          }
-         if (event.eventSuffix == 'CAST_FAILED') {
+         if (event.eventSuffix === 'CAST_FAILED') {
             s += ` ${c.gray}failed`;
             if (event.failedType)
                s += ` (${event.failedType})`;
@@ -469,7 +470,11 @@ module.exports = class Log {
       }
       if (customFuncResult && customFuncResult.extraText)
          s += ` ${c.cyanDark}${customFuncResult.extraText}`;
-      console.log(s + c.off);
+
+      if (printToStack)
+         printToStack.push([+event.date, s + c.off, event.overheal, event.eventSuffix === 'HEAL']);
+      else
+         console.log(s + c.off);
    }
 
    finish() {
