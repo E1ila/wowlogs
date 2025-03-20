@@ -3,6 +3,7 @@
 const Table = require('cli-table');
 
 const c = require("../colors");
+const utils = require("../utils");
 const PlayerSpells = {1857: "Vanish"};
 
 let firstMC = undefined;
@@ -84,13 +85,13 @@ module.exports = {
          const mcdata = mc[event.target.guid];
          if (event.event === 'SPELL_AURA_APPLIED') {
             if (mcdata) 
-               result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${mcdata.by}${c.off}`;
+               result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${utils.removeServerName(mcdata.by)}${c.off}`;
             mc[event.target.guid] = {by: event.source.name, time: +event.date};
          } else if (event.event === 'SPELL_AURA_REMOVED') {
             result.extraText = `${c.cyan}MC lasted ${(+event.date-mcdata.time)/1000} sec${c.off}`;
             mcdata.time = +event.date;
          } else if (event.event === 'SPELL_MISSED' && event.missType === 'IMMUNE' && mc[event.target.guid]) {
-            result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${mcdata.by}${c.off}`;
+            result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${utils.removeServerName(mcdata.by)}${c.off}`;
          }
       }
 
