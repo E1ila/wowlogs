@@ -3,6 +3,7 @@ const fs = require('fs');
 const parser = require('./parser');
 const consts = require('./consts');
 const c = require('./colors');
+const utils = require("./utils");
 
 const IgnoreFails = [
    "Not enough energy",
@@ -257,7 +258,7 @@ module.exports = class Log {
          }
          guidText = ` (${id})`;
       }
-      return (summonedBy ? this.getPrettyEntityName(summonedBy, printGuid, true) + "'s " : '') + color + entity.name.split('-')[0] + c.off + (entity.mcBy ? ` [${c.cyanBright}${entity.mcBy}${c.off}]` : '') + guidText;
+      return (summonedBy ? this.getPrettyEntityName(summonedBy, printGuid, true) + "'s " : '') + color + entity.name.split('-')[0] + c.off + (entity.mcBy ? ` [${c.cyanBright}${utils.removeServerName(entity.mcBy)}${c.off}]` : '') + guidText;
    }
 
    printPretty(lineNumber, event, customFuncResult, printTimeDiff, printToStack) {
@@ -453,6 +454,8 @@ module.exports = class Log {
                s += ` ${c.gray}(${event.absorbed} absorbed)`;
             if (event.overheal > 0)
                s += ` ${c.gray}(${event.overheal} overheal)`;
+            if (event.overkill > 0)
+               s += ` ${c.gray}(${event.overkill} overkill)`;
 
             if (this.options['resists']) {
                const resistRatio = (event.resisted || 0) / (event.amount + (event.resisted || 0) + (event.absorbed || 0));
@@ -472,7 +475,7 @@ module.exports = class Log {
          s += ` ${c.cyanDark}${customFuncResult.extraText}`;
 
       if (printToStack)
-         printToStack.push([+event.date, s + c.off, event.overheal, event.eventSuffix === 'HEAL']);
+         printToStack.push([+event.date, s + c.off, event.overheal, event.eventSuffix === 'HEAL', event]);
       else
          console.log(s + c.off);
    }

@@ -17,6 +17,7 @@ const WIDOWS_EMBRACE = 28732;
 const WARRIOR_TAUNT = 355;
 const DISRUPTING_SHOUT = 29107;
 const RAIN_OF_FIRE = 28794;
+const SUECIDE = 7;
 
 module.exports = {
    /**
@@ -102,9 +103,7 @@ module.exports = {
       if (
          event.spell
          && [WIDOWS_EMBRACE].indexOf(event.spell.id) !== -1
-         && event.target && event.target.name === "Grand Widow Faerlina"
-         && ['SPELL_MISSED', 'SPELL_AURA_REMOVED', 'SPELL_AURA_APPLIED'].indexOf(event.event) !== -1
-         && (!event.target || event.target.name !== 'Battle Chicken')
+         && event.event === 'SPELL_CAST_SUCCESS'
       ) {
          if (event.event === 'SPELL_AURA_REMOVED')
             result.extraText = `${c.purpleBg}${c.white} !! ${c.off}`;
@@ -113,6 +112,9 @@ module.exports = {
          result.printPretty = true;
       }
 
+      if (event.spell && event.spell.id === SUECIDE) {
+         result.printPretty = true;
+      }
       if (event.spell && event.spell.id === DISRUPTING_SHOUT && (!event.target || event.target.name !== 'Battle Chicken') && !slim) {
          result.printPretty = true;
       }

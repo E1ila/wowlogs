@@ -19,6 +19,10 @@ module.exports = {
       if (options.params.length < 1) {
          throw new Error(`${c.red}Missing player name${c.off}`);
       }
+      const sourceIsPlayer = event.source && event.source.guid.indexOf('Player-') === 0;
+      if (["SWING_MISSED", "SPELL_MISSED"].indexOf(event.event) !== -1 && event.missType === "PARRY" && sourceIsPlayer) {
+         return { printToStack: dmghealStack, printPretty: true };
+      }
       const player = options.params[0];
       let sourceMatch = (event.source && event.source.name === player);
       let targetMatch = (event.target && event.target.name === player);
@@ -32,15 +36,33 @@ module.exports = {
          dmghealStack.shift();
       }
       if (unitDied) {
+         // find last damage event
+         let killer = undefined;
+         for (let i = dmghealStack.length - 1; i >= 0; i--) {
+            const e = dmghealStack[i][4];
+            let targetMatch = (e.target && e.target.name === player);
+            let sourceIsCreature = (e.source && e.source.guid.indexOf('Creature-') === 0);
+            if (targetMatch && sourceIsCreature && !dmghealStack[i][3]) {
+               killer = e.source;
+               break;
+            }
+         }
+         // clean stack
          for (let i = dmghealStack.length - 1; i >= 0; i--) {
             const item = dmghealStack[i];
             if (item[2] > 0) {
+               // overheal - stop here
                dmghealStack = dmghealStack.slice(i);
                break;
             }
             if (item[3]) {
+               // add time delta to heals
                const d = +event.date - item[0];
                item[1] += `   ${c.cyan}${d/1000} sec before death${c.off}`;
+            }
+            if (item[4].missType === "PARRY" && (!killer || item[4].target && item[4].target.guid !== killer.guid)) {
+               dmghealStack.splice(i, 1);
+               i++;
             }
          }
          console.log(`--------------------------------------------------------------------------------`);
