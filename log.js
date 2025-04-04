@@ -141,6 +141,9 @@ module.exports = class Log {
          if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
             return;
 
+         if (this.options['dmg'] && !(event.amount > 0 && event.event !== 'SPELL_ENERGIZE' && event.eventSuffix !== 'HEAL'))
+            return;
+
          if (this.options['heals'] && !(event.spell && consts.Heals[event.spell.id]))
             return;
 
@@ -176,7 +179,7 @@ module.exports = class Log {
          this.printPretty(lineNumber, event, customFuncResult, this.options['timediff'], customFuncResult && customFuncResult.printToStack);
       }
 
-      if (this.options['printraw'])
+      if (this.options['printraw'] || customFuncResult && customFuncResult.printRaw)
          console.log(rawLine);
 
       if (this.result.startTime === undefined) 

@@ -128,6 +128,7 @@ const
 
 async function praseGear(readItem, gearItems) {
    const records = [];
+   const stats = {};
    const seenSlots = {};
    for (let gearItem of gearItems) {
       if (!ItemCache[gearItem.itemId])
@@ -152,12 +153,21 @@ async function praseGear(readItem, gearItems) {
          if (slot) {
             seenSlots[slot] = true;
             records.push([slot, item[col_name],item[col_quality] + 1]);
+            for (let i = 0; i < 10; i++) {
+               const col_stat_type = ItemDBColumns.indexOf("stat_type" + (i + 1));
+               const col_stat_value = ItemDBColumns.indexOf("stat_value" + (i + 1));
+               if (item[col_stat_type] && item[col_stat_value]) {
+                  let stat = statTypes[item[col_stat_type]];
+                  if (stat)
+                     stats[stat] = (stats[stat] || 0) + (+item[col_stat_value]);
+               }
+            }
          } else {
             console.error(name, `Third ${consts.ItemSlot[item[col_inventory_type]]} ?!`);
          }
       }
    }
-   return records;
+   return {items: records, stats};
 }
 
 
@@ -179,11 +189,11 @@ module.exports = {
          await this.itemdb.read(path.join(__dirname, '..', 'items.csv.gz'), ['entry']);
       }
 
-      if (event.source && event.source.guid && !playerNames[event.source.guid]) {
-         playerNames[event.source.guid] = event.source.name;
+      if (event.source && event.source.name && event.source.guid && event.source.guid.indexOf('Player-') === 0 && !playerNames[event.source.guid]) {
+         playerNames[event.source.guid] = event.source.name.split('-')[0];
       }
-      if (event.event === COMBATANT_INFO) {
-         if (!options.params.length || playerNames[event.playerGuid] && playerNames[event.playerGuid].toLowerCase().indexOf(options.params[0].toLowerCase()) === 0) {
+      if (event.event === COMBATANT_INFO && currentEncounter.encounterName === options.params[0]) {
+         if (!options.params.length || playerNames[event.playerGuid] && playerNames[event.playerGuid].toLowerCase().indexOf(options.params[1].toLowerCase()) === 0) {
             const gear = await praseGear(itemId => {
                try {
                   return this.itemdb.get("entry", itemId);
@@ -194,7 +204,14 @@ module.exports = {
             let table = new Table({
                head: ['Slot', 'Item', 'iLevel'],
             });
-            gear.forEach(g => table.push(g));
+            gear.items.forEach(g => table.push(g));
+            console.log(table.toString());
+            table = new Table({
+               head: ['Stat', 'Value'],
+            });
+            for (let stat in gear.stats) {
+               table.push([stat, gear.stats[stat]]);
+            }
             console.log(table.toString());
          }
       }

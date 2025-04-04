@@ -108,9 +108,11 @@ module.exports = {
       }
       else if (event.event === 'SPELL_DISPEL' && event.source && event.target) { //  && eligable[event.source.name]
          // result.printPretty = true;
-         if (!decurses[event.source.name])
-         decurses[event.source.name] = {};
-         decurses[event.source.name][event.extraSpellName] = (decurses[event.source.name][event.extraSpellName] || 0) + 1;
+         const nameParts = event.source.name.split('-')
+         const name = `${nameParts[0]}-${nameParts[1]}`;
+         if (!decurses[name])
+         decurses[name] = {};
+         decurses[name][event.extraSpellName] = (decurses[name][event.extraSpellName] || 0) + 1;
          // result.printPretty = true;
       } 
       else if (event.event === 'SPELL_AURA_APPLIED' && [FrostProtSpellId, GreaterFrostProtSpellId].indexOf(event.spell.id) != -1) {
@@ -129,7 +131,8 @@ module.exports = {
             const player = players[event.target.guid];
             if (!player)
                throw new Error(`Can't find player with event.target.guid ${event.target.guid}`);
-            player.name = event.target.name;
+            const nameParts = event.target.name.split('-');
+            player.name = `${nameParts[0]}-${nameParts[1]}`;
             player.ticks += 1;
             playerByName[player.name] = player;
             
@@ -159,7 +162,7 @@ module.exports = {
       },
       
       finishReport: function (report, options) {
-         console.log(`\n${c.whiteBright}${'Player'.padEnd(25)} ${'FrR'.padStart(5)} ${'Dmg taken'.padStart(10)} ${'Absorbed'.padStart(10)} ${'Resisted'.padStart(10)} ${'GFPP'.padStart(5)} ${'FPP'.padStart(5)}  ${'Activity'.padEnd(10)}${c.off}`);
+         console.log(`\n${c.whiteBright}${'Player'.padEnd(15)} ${'FrR'.padStart(5)} ${'Dmg taken'.padStart(10)} ${'Absorbed'.padStart(10)} ${'Resisted'.padStart(10)} ${'GFPP'.padStart(5)} ${'FPP'.padStart(5)}  ${'Activity'.padEnd(10)}${c.off}`);
          console.log(''.padEnd(100, '-'));
          
          const fightLength = moment(fightEnd).diff(moment(fightStart), 'seconds');
@@ -171,7 +174,7 @@ module.exports = {
          for (let player of Object.values(players)) {
             player.activity = player.died ? moment(player.died).diff(moment(fightStart), 'seconds') / fightLength : 1;
             rows.push([
-               player.name || player.guid, ''+player.fr, 
+               player.name || player.guid, ''+player.fr,
                player.damage.toLocaleString(), 
                player.absorbed.toLocaleString(), 
                player.resisted.toLocaleString(), 
@@ -197,7 +200,7 @@ module.exports = {
          rows.forEach(row => {
             if (row.length) {
                const playerInfo = dbPlayer.get('name', row[0]);
-               console.log(`${playerInfo ? classColor[playerInfo[2]] : c.off}${(row[0] || '??').padEnd(25)}${c.off} ${row[8].fr>200 ? c.greenBright : (row[8].fr>150 ? c.green : (row[8].fr>100 ? c.orange : (row[8].fr<50 ? c.red : c.orangeDark)))}${row[1].padStart(5)}${c.off} ${row[2].padStart(10)}${c.off} ${row[8].absorbed>7000 ? c.greenBright : (row[8].absorbed>4500 ? c.green : (row[8].absorbed<2000 ? c.redDark : c.off))}${row[3].padStart(10)}${c.off} ${row[4].padStart(10)} ${row[5].padStart(5)} ${row[6].padStart(5)}  ${row[7].padEnd(10)}${c.off}`);
+               console.log(`${playerInfo ? classColor[playerInfo[2]] : c.off}${(row[0] ? row[0].split('-')[0] : '??').padEnd(15)}${c.off} ${row[8].fr>200 ? c.greenBright : (row[8].fr>150 ? c.green : (row[8].fr>100 ? c.orange : (row[8].fr<50 ? c.red : c.orangeDark)))}${row[1].padStart(5)}${c.off} ${row[2].padStart(10)}${c.off} ${row[8].absorbed>7000 ? c.greenBright : (row[8].absorbed>4500 ? c.green : (row[8].absorbed<2000 ? c.redDark : c.off))}${row[3].padStart(10)}${c.off} ${row[4].padStart(10)} ${row[5].padStart(5)} ${row[6].padStart(5)}  ${row[7].padEnd(10)}${c.off}`);
                // ${row[6].damage>40000 ? c.redDark : (row[6].damage>20000 ? c.orangeDark : (row[6].damage>10000 ? c.greenDark : c.green))}
             }
          });
@@ -205,7 +208,7 @@ module.exports = {
          
          console.log(`\nPlayer,FrR,Dmg taken,Absorbed,Resisted,GFPP,FPP,Activity`);
          rows.filter(row => row.length && row[8].activity > 0.98).forEach(row => {
-            console.log(`${row[0] || '??'},${row[8].fr},${row[8].damage},${row[8].absorbed},${row[8].resisted},${row[8].gfpp},${row[8].fpp},${row[8].activity}`);
+            console.log(`${row[0] ? row[0].split('-')[0] : '??'},${row[8].fr},${row[8].damage},${row[8].absorbed},${row[8].resisted},${row[8].gfpp},${row[8].fpp},${row[8].activity}`);
          });
 
          console.log(`\nDecurses:`);
@@ -217,7 +220,7 @@ module.exports = {
             const playerInfo = dbPlayer.get('name', name);
             const player = playerByName[name];
             let participation = player.died ? c.red + Math.round(moment(player.died).diff(moment(fightStart), 'seconds') / fightLength * 100)+c.redDark+'%'+c.off : '100%';
-            let row = [(playerInfo ? classColor[playerInfo[2]] : c.off) + name + c.off, participation];
+            let row = [(playerInfo ? classColor[playerInfo[2]] : c.off) + name.split('-')[0] + c.off, participation];
             for (let i = 0; i < head.length - existingHeaders; i++) 
                row.push(0);
             for (let spellName in stats) {
@@ -257,4 +260,3 @@ module.exports = {
          console.log(`\nImportant events: \n${lineEvents.map(o => o.join(' ')).join('\n')}`)
       },
    }
-   

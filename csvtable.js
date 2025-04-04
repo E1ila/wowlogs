@@ -59,6 +59,8 @@ module.exports = class CsvTable {
             let n = 0;
             lineReader.on("line", (line) => {
                 n++;
+                if (!line || !line.length)
+                    return;
                 let row = CSVToArray(line);
                 if (row && row.length)
                     row = row[0];

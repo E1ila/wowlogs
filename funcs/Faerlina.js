@@ -12,6 +12,7 @@ let razuviousName = undefined;
 let lastRazTarget = undefined;
 
 let mc = {};
+let mcers = {};
 
 const MIND_CONTROL = 10912;
 const WIDOWS_EMBRACE = 28732;
@@ -45,6 +46,7 @@ module.exports = {
          if (targetParts.length === 7 && targetParts[5] === '16506') {
             result.printPretty = true;
             mc[event.target.guid] = {by: event.source.name, time: +event.date};
+            mcers[event.source.name] = true;
             firstMC = event;
             understudyName = event.target.name;
          }
@@ -87,9 +89,11 @@ module.exports = {
             if (mcdata) 
                result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${utils.removeServerName(mcdata.by)}${c.off}`;
             mc[event.target.guid] = {by: event.source.name, time: +event.date};
+            mcers[event.source.name] = true;
          } else if (event.event === 'SPELL_AURA_REMOVED') {
             result.extraText = `${c.cyan}MC lasted ${(+event.date-mcdata.time)/1000} sec${c.off}`;
             mcdata.time = +event.date;
+            mcers[event.source.name] = false;
          } else if (event.event === 'SPELL_MISSED' && event.missType === 'IMMUNE' && mc[event.target.guid]) {
             result.extraText = `${c.greenDark}last MC ${c.green}${(+event.date-mcdata.time)/1000}${c.greenDark} sec ago by ${c.green}${utils.removeServerName(mcdata.by)}${c.off}`;
          }
@@ -133,6 +137,10 @@ module.exports = {
          lastRazTarget = event.target.name;
          result.printPretty = true;
          console.log(` -- ${c.orangeBright}${razuviousName} attacks ${event.target.name}${c.off}`);
+      }
+
+      if (event.eventSuffix === 'DAMAGE' && event.target && mcers[event.target.name]) {
+         result.printPretty = true;
       }
 
       return result;
