@@ -33,7 +33,7 @@ program
    .command('<log-path>', 'Path to log file or raw log line to parse')
    .option('--caststart', 'Print also cast start events')
    .option('--dmgheal', 'Show only entries with damage/healing>0')
-   .option('--dmg', 'Show only entries with damage')
+   .option('--dmg <min-amount>', 'Show only entries with damage')
    .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
    .option('--encounters', 'Print detected encounters')
    .option('--ext <extension>', 'Process only files with this extension')

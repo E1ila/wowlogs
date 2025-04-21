@@ -1,3 +1,7 @@
-grep -E "Frostbolt|Frost Shock|Shoot|Frost Nova|Chilled" $1 | grep -E "SPELL_CAST_SUCCESS|SPELL_MISSED" -c
+#grep -E "Frostbolt|Frost Shock|Shoot|Frost Nova|Chilled" $1 | grep -E "SPELL_CAST_SUCCESS|SPELL_MISSED" -c
+
+wl $1 --filter SPELL_DAMAGE -P --encounter Viscidus --target Viscidus | grep -E "Frostbolt|Frost Shock|Shoot|Frost Nova|Chilled|Frost Blast" > 2
+wl $1 --filter SPELL_CAST_SUCCESS -P --encounter Viscidus --target Viscidus | grep -E "Shoot" >> 2
+wc -l 2
 
 

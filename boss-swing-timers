@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [ $# -eq 0 ]; then
-    >&2 echo "Usage: ./boss-swing-timers LOGS_DIR BOSS_NAME"
-    exit 1
+  >&2 echo "Usage: ./boss-swing-timers LOGS_DIR BOSS_NAME"
+  exit 1
 fi
 
-./wowlog.js $1 --func ParryHaste -p $2 --ext txt
+./wowlog.js $1 --func ParryHaste -p "$2" --ext txt

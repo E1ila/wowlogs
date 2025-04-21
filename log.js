@@ -138,10 +138,10 @@ module.exports = class Log {
          if (this.options['miss'] && !(event.missType && event.missType.toLowerCase() === this.options['miss'].toLowerCase()))
             return;
 
-         if (this.options['dmgheal'] && !(event.amount > 0 && event.event != 'SPELL_ENERGIZE'))
+         if (this.options['dmgheal'] && !(event.amount > 0 && event.event !== 'SPELL_ENERGIZE' || event.event === 'UNIT_DIED'))
             return;
 
-         if (this.options['dmg'] && !(event.amount > 0 && event.event !== 'SPELL_ENERGIZE' && event.eventSuffix !== 'HEAL'))
+         if (this.options['dmg'] && !(event.amount > +this.options['dmg'] && !['SPELL_ENERGIZE', 'SPELL_EXTRA_ATTACKS'].includes(event.event) && event.eventSuffix !== 'HEAL' || event.event === 'UNIT_DIED'))
             return;
 
          if (this.options['heals'] && !(event.spell && consts.Heals[event.spell.id]))
@@ -154,8 +154,8 @@ module.exports = class Log {
             if (this.options['filter'].indexOf(event.event) === -1)
                return;
          }
-         let sourceMatch = !this.options['source'] || (event.source && (event.source.name == this.options['source'] || event.source.guid === this.options['source']));
-         let targetMatch = !this.options['target'] || (event.target && (event.target.name == this.options['target'] || event.target.guid === this.options['target'] || this.options['target'].toLowerCase() === 'player' && event.target.guid.indexOf('Player-') === 0));
+         let sourceMatch = !this.options['source'] || (event.source && (event.source.name === this.options['source'] || event.source.guid === this.options['source']));
+         let targetMatch = !this.options['target'] || (event.target && (event.target.name === this.options['target'] || event.target.guid === this.options['target'] || this.options['target'].toLowerCase() === 'player' && event.target.guid.indexOf('Player-') === 0));
          let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
          if (event.event !== 'COMBATANT_INFO' && (!unitDied || !this.options['encounter'])) {
             if (this.options['stand'] || !this.options['source'] || !this.options['target']) {

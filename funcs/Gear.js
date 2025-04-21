@@ -160,6 +160,8 @@ async function praseGear(readItem, gearItems) {
                   let stat = statTypes[item[col_stat_type]];
                   if (stat)
                      stats[stat] = (stats[stat] || 0) + (+item[col_stat_value]);
+                  else
+                     console.log(`Unknown stat type ${item[col_stat_type]} for item ${item[col_name]}`);
                }
             }
          } else {
