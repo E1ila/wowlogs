@@ -5,6 +5,7 @@ const Table = require('cli-table');
 const c = require("../colors");
 
 let dmghealStack = [];
+let bufflost = [];
 
 module.exports = {
    /**
@@ -26,6 +27,13 @@ module.exports = {
       const player = options.params[0];
       let sourceMatch = (event.source && event.source.name === player);
       let targetMatch = (event.target && event.target.name === player);
+
+      if (event.event === "SPELL_AURA_REMOVED" && event.spell && event.spell.name && targetMatch) {
+         bufflost.push({buff: event.spell.name, time: +event.date, event});
+         while (bufflost.length > 20) {
+            bufflost.shift();
+         }
+      }
       let unitDied = event.event === 'UNIT_DIED' && (sourceMatch || targetMatch)
       if (event.event !== 'COMBATANT_INFO' && !unitDied && !targetMatch)
          return;
@@ -34,6 +42,9 @@ module.exports = {
       const timeBeforeDeath = options.params.length > 1 ? +options.params[1] : 10000;
       while (dmghealStack.length && (dmghealStack.length > 100 || dmghealStack[0][0] < +event.date - timeBeforeDeath)) {
          dmghealStack.shift();
+      }
+      while (bufflost.length && (bufflost[0].date < +event.date - 0.1) ) {
+         bufflost.shift();
       }
       if (unitDied) {
          // find last damage event
@@ -65,6 +76,7 @@ module.exports = {
                i++;
             }
          }
+         console.log(`Active buffs: ${bufflost.map(i => i.buff).join(', ')}`);
          console.log(`--------------------------------------------------------------------------------`);
          console.log(dmghealStack.map(i => i[1]).join('\n'));
          dmghealStack = [];
