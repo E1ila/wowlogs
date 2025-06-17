@@ -3,9 +3,9 @@
 const Table = require('cli-table');
 const c = require("../colors");
 
-const MEDIAN_FILTER_THRESHOLD = 1.5;
+const MEDIAN_FILTER_THRESHOLD = 2.5;
 const THRASH_PROC_THRESHOLD = 45 / 1000;
-const MAX_SWING = 2.7;
+const MAX_SWING = 3.2;
 const MAX_VALID_DELTA = 10;
 
 let lastSwing = 0;

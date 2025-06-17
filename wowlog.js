@@ -60,6 +60,7 @@ program
    .option('--timediff', 'Measure time difference between events')
    .option('-p, --params <param>', 'Extra parameters passed to custom function', collect, [])
    .option('-v, --verbose', 'Print detailed debug information')
+   .option('--v114', 'Use v1.14 log version as default')
    .action(async (logPath, options) => {
       const report = {
          files: 0,

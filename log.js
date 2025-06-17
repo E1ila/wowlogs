@@ -45,7 +45,7 @@ module.exports = class Log {
       let versionData = {
          version: 9,
          advanced: true,
-         build: 1.1506,
+         build: this.options['v114'] ? 1.14 : 1.1506,
          projectId: 2,
       };
       let lineNumber = 0;

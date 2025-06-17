@@ -203,7 +203,6 @@ parse.line = (lineNumber, line, versionData) => {
       case 'UNIT_DESTROYED':
       case 'UNIT_DISSIPATES':
          return o;
-         break
       default:
          break
    }
