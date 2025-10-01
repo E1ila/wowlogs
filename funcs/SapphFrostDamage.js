@@ -117,8 +117,12 @@ module.exports = {
       } 
       else if (event.event === 'SPELL_AURA_APPLIED' && [FrostProtSpellId, GreaterFrostProtSpellId].indexOf(event.spell.id) != -1) {
          result.printPretty = true;
-         const player = players[event.target.guid];
-         if (event.spell.id == GreaterFrostProtSpellId)
+         let player = players[event.target.guid];
+         if (!player) {
+            player = {fr: '-1', absorbed: 0, resisted: 0, damage: 0, ticks: 0, died: null, fpp: 0, gfpp: 0, guid: event.target.guid};
+            players[event.target.guid] = player;
+         }
+         if (event.spell.id === GreaterFrostProtSpellId)
             player.gfpp += 1;
          else 
             player.fpp += 1;
@@ -128,9 +132,11 @@ module.exports = {
          event.source.name === currentEncounter.encounterName &&
          event.target && event.target.guid.indexOf('Player-') === 0) {
             
-            const player = players[event.target.guid];
-            if (!player)
-               throw new Error(`Can't find player with event.target.guid ${event.target.guid}`);
+            let player = players[event.target.guid];
+            if (!player) {
+               player = {fr: '-1', absorbed: 0, resisted: 0, damage: 0, ticks: 0, died: null, fpp: 0, gfpp: 0, guid: event.target.guid};
+               players[event.target.guid] = player;
+            }
             const nameParts = event.target.name.split('-');
             player.name = `${nameParts[0]}-${nameParts[1]}`;
             player.ticks += 1;
