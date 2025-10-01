@@ -116,7 +116,7 @@ program
          console.log(` Finished processing ${report.files} files, took ${took} seconds`);
       }
 
-      if (options['encounters']) {
+      if (options['encounters'] && encounters.length > 0) {
          console.log(` Encounters:`);
          console.log(encounters.map(row => `    • ${row[1]} ${row[0]}`).join("\n"));
       }

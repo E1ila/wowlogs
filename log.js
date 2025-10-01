@@ -1,5 +1,6 @@
 const readlinePromises = require('readline/promises');
 const fs = require('fs');
+const path = require('path');
 const parser = require('./parser');
 const consts = require('./consts');
 const c = require('./colors');
@@ -50,6 +51,56 @@ module.exports = class Log {
       };
       let lineNumber = 0;
       let lastEvent;
+      let skipUntilLine = 0;
+
+      // Check if we need to use an index for encounter filtering
+      if (this.filename && (this.options['encounter'] || this.options['encounters'])) {
+         const indexPath = this.filename + '.idx';
+         let indexData = null;
+
+         // Try to read existing index
+         if (fs.existsSync(indexPath)) {
+            indexData = await this.readIndex(indexPath);
+         } else {
+            // Build index if it doesn't exist
+            console.log(`Index file not found, building index for ${path.basename(this.filename)}...`);
+            await this.buildIndex(this.filename, indexPath);
+            indexData = await this.readIndex(indexPath);
+         }
+
+         // If --encounters flag is used, print encounters from index and exit
+         if (this.options['encounters'] && indexData) {
+            console.log('Encounters (from index):');
+            const encounterCounts = {};
+            indexData.forEach(entry => {
+               encounterCounts[entry.encounterName] = (encounterCounts[entry.encounterName] || 0) + 1;
+            });
+
+            for (const entry of indexData) {
+               const attempt = indexData.filter(e =>
+                  e.encounterName === entry.encounterName && e.lineNumber <= entry.lineNumber
+               ).length;
+               console.log(`  Line ${entry.lineNumber.toString().padStart(8)} [${entry.timestamp}]: ${entry.encounterName} #${attempt}`);
+            }
+            return; // Exit early without processing the log
+         }
+
+         // Find the encounter in the index for filtering
+         if (indexData && this.options['encounter']) {
+            const encounterFilter = this.options['encounter'].toLowerCase();
+            const encounterEntry = indexData.find(entry =>
+               entry.encounterName.toLowerCase() === encounterFilter
+            );
+
+            if (encounterEntry) {
+               // Start reading 1000 lines before the encounter
+               skipUntilLine = Math.max(0, encounterEntry.lineNumber - 1000);
+               if (skipUntilLine > 0) {
+                  console.log(`Using index: jumping to line ${skipUntilLine} (1000 lines before encounter)`);
+               }
+            }
+         }
+      }
 
       const readInterface = readlinePromises.createInterface({
          input: this.filename ? fs.createReadStream(this.filename) : process.stdin,
@@ -59,6 +110,12 @@ module.exports = class Log {
 
       for await (const line of readInterface) {
          lineNumber++;
+
+         // Skip lines until we reach the start point
+         if (skipUntilLine > 0 && lineNumber < skipUntilLine) {
+            continue;
+         }
+
          if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
             const data = line.split('  ')[1].split(',');
             const build = data[5].split('.');
@@ -518,5 +575,77 @@ module.exports = class Log {
       }
 
       // console.log(JSON.stringify(Heals));
+   }
+
+   async buildIndex(logFilePath, indexPath) {
+      const encounters = [];
+      let lineNumber = 0;
+      let versionData = {
+         version: 9,
+         advanced: true,
+         build: this.options['v114'] ? 1.14 : 1.1506,
+         projectId: 2,
+      };
+
+      const readInterface = readlinePromises.createInterface({
+         input: fs.createReadStream(logFilePath),
+         console: false
+      });
+
+      for await (const line of readInterface) {
+         lineNumber++;
+
+         if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
+            const data = line.split('  ')[1].split(',');
+            const build = data[5].split('.');
+            versionData = {
+               version: parseFloat(data[1]),
+               advanced: data[3] === '1',
+               build: parseFloat(build[0] + '.' + build[1] + build[2].padStart(2, '0')),
+               projectId: parseFloat(data[7]),
+            }
+         } else {
+            try {
+               const event = parser.line(lineNumber, line, versionData);
+               if (event && event.event === 'ENCOUNTER_START') {
+                  encounters.push({
+                     lineNumber: lineNumber,
+                     encounterId: event.encounterId,
+                     encounterName: event.encounterName,
+                     timestamp: event.dateStr
+                  });
+               }
+            } catch (e) {
+               // Ignore parsing errors during indexing
+            }
+         }
+      }
+
+      // Write index file
+      const indexContent = encounters.map(e =>
+         `${e.lineNumber},${e.encounterId},${e.timestamp},${e.encounterName}`
+      ).join('\n');
+
+      fs.writeFileSync(indexPath, indexContent, 'utf8');
+      console.log(`Index created with ${encounters.length} encounters`);
+   }
+
+   async readIndex(indexPath) {
+      try {
+         const content = fs.readFileSync(indexPath, 'utf8');
+         const lines = content.trim().split('\n');
+         return lines.map(line => {
+            const parts = line.split(',');
+            return {
+               lineNumber: parseInt(parts[0]),
+               encounterId: parseInt(parts[1]),
+               timestamp: parts[2],
+               encounterName: parts.slice(3).join(',') // Handle encounter names with commas
+            };
+         });
+      } catch (e) {
+         console.error(`Failed to read index: ${e.message}`);
+         return null;
+      }
    }
 }
