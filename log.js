@@ -111,11 +111,6 @@ module.exports = class Log {
       for await (const line of readInterface) {
          lineNumber++;
 
-         // Skip lines until we reach the start point
-         if (skipUntilLine > 0 && lineNumber < skipUntilLine) {
-            continue;
-         }
-
          if (line.indexOf('COMBAT_LOG_VERSION') !== -1) {
             const data = line.split('  ')[1].split(',');
             const build = data[5].split('.');
@@ -125,7 +120,14 @@ module.exports = class Log {
                build: parseFloat(build[0] + '.' + build[1] + build[2].padStart(2, '0')),
                projectId: parseFloat(data[7]),
             }
+            if (this.options['pv']) {
+               console.log(line);
+            }
          } else {
+            // Skip lines until we reach the start point
+            if (skipUntilLine > 0 && lineNumber < skipUntilLine) {
+               continue;
+            }
             let event;
             try {
                event = parser.line(lineNumber, line, versionData);

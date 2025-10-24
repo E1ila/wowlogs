@@ -37,6 +37,7 @@ program
    .option('--encounter <name>', 'Show only events made during this encounter, use : to add attempt filter, i.e. --encounter Gluth:2')
    .option('--encounters', 'Print detected encounters')
    .option('--ext <extension>', 'Process only files with this extension')
+   .option('--ff <string>', 'Process only files that contain this string in filename')
    .option('--filter <CSV>', 'Process only these events, CSV', v => v.split(","), undefined)
    .option('--force', 'Force treating file as log version 9')
    .option('--func <functionName>', 'Print parsed events')
@@ -59,6 +60,7 @@ program
    .option('--target <name>', 'Show only events made by this player')
    .option('--timediff', 'Measure time difference between events')
    .option('-p, --params <param>', 'Extra parameters passed to custom function', collect, [])
+   .option('--pv', 'Print version (first line of log file)')
    .option('-v, --verbose', 'Print detailed debug information')
    .option('--v114', 'Use v1.14 log version as default')
    .action(async (logPath, options) => {
@@ -93,6 +95,8 @@ program
                if (options['ext'] && !file.endsWith('.' + options['ext']))
                   continue;
                if (options['prefix'] && !file.startsWith(options['prefix']))
+                  continue;
+               if (options['ff'] && !file.includes(options['ff']))
                   continue;
                await processFile(path.join(logPath, file), options, report, func, fileIndex++);
             }
