@@ -89,11 +89,14 @@ parse.line = (lineNumber, line, versionData) => {
    if (versionData.version < 9)
       throw new Error("Unsupported version: " + versionData.version);
    if (!line || !line.split)
-      throw new Error(`Line ${lineNumber} doesn't have split func: ${line}`);
+      return null;
+      // throw new Error(`Line ${lineNumber} doesn't have split func: ${line}`);
 
    let o = {}
    let l = line.split('  ')
    o.date = parse.date(l[0])
+   if (isNaN(+o.date) || !l[1])
+      return null;
    o.dateStr = l[0];
 
    l = l[1].split(',')
