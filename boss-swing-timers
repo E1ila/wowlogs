@@ -5,4 +5,4 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-./wowlog.js $1 --func ParryHaste -p "$2" --encounter "$2" --ext txt
+wl $1 --func ParryHaste -p "$2" --encounter "$2" --ext txt --ff _Naxx_
