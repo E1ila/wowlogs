@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 import re
+import sys
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
+# Constants
+MAX_TIME_SECONDS = 8
+BATTLE_GAP_SECONDS = 8
+BINS_PER_SECOND = 40
+
 def main():
+    # Get filename and boss name from command line arguments
+    if len(sys.argv) < 3:
+        print("Usage: python3 analyse-boss-hits.py <filename> <boss_name>")
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    boss_name = sys.argv[2]
+
     # Read the file
-    with open('Maexxna.txt', 'r') as f:
+    with open(filename, 'r') as f:
         lines = f.readlines()
 
     # Track boss hits and whether they came after a player PARRY
@@ -28,20 +42,20 @@ def main():
             # Get event type (column 5 onwards)
             event_line = ' '.join(parts[4:])
 
-            # If gap > 60 seconds, this is a new battle - reset state
-            if time_since_last > 60:
+            # If gap > BATTLE_GAP_SECONDS, this is a new battle - reset state
+            if time_since_last > BATTLE_GAP_SECONDS:
                 last_event_was_player_parry = False
                 continue
 
-            # Check if player parried the boss (Maexxna missed Hazt PARRY)
-            if 'SWING_MISSED' in event_line and 'Maexxna missed' in event_line and 'PARRY' in event_line:
+            # Check if player parried the boss
+            if 'SWING_MISSED' in event_line and f'{boss_name} missed' in event_line and 'PARRY' in event_line:
                 last_event_was_player_parry = True
                 continue
 
-            # Check if this is a boss hit (Maexxna hit or Maexxna missed for other reasons)
+            # Check if this is a boss hit
             if ('SWING_DAMAGE_LANDED' in event_line or 'SWING_MISSED' in event_line) and event_line.startswith('SWING'):
-                # Make sure it's Maexxna doing the action
-                if 'Maexxna hit' in event_line or 'Maexxna missed' in event_line:
+                # Make sure it's the boss doing the action
+                if f'{boss_name} hit' in event_line or f'{boss_name} missed' in event_line:
                     # Skip the duplicate events (time_since_last = 0)
                     if time_since_last == 0:
                         continue
@@ -70,7 +84,9 @@ def main():
     print(f"Hits NOT after player PARRY: {len(not_after_parry)}")
 
     # Create histogram data
-    bins = [i * 0.025 for i in range(0, 201)]  # 0 to 5 seconds in 0.025 second increments (40 bars per second)
+    bin_width = 1.0 / BINS_PER_SECOND
+    num_bins = int(MAX_TIME_SECONDS / bin_width) + 1
+    bins = [i * bin_width for i in range(num_bins)]
 
     # Create the plots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
@@ -79,17 +95,17 @@ def main():
     ax1.hist(after_parry, bins=bins, edgecolor='black', alpha=0.7, color='red')
     ax1.set_xlabel('Time since last hit (seconds)')
     ax1.set_ylabel('Number of hits')
-    ax1.set_title(f'Boss Hit Timing AFTER Player PARRY (n={len(after_parry)})')
+    ax1.set_title(f'{boss_name} Hit Timing AFTER Player PARRY (n={len(after_parry)})')
     ax1.grid(True, alpha=0.3)
-    ax1.set_xlim(0, 5)
+    ax1.set_xlim(0, MAX_TIME_SECONDS)
 
     # Plot 2: Hits NOT after PARRY
     ax2.hist(not_after_parry, bins=bins, edgecolor='black', alpha=0.7, color='blue')
     ax2.set_xlabel('Time since last hit (seconds)')
     ax2.set_ylabel('Number of hits')
-    ax2.set_title(f'Boss Hit Timing NOT After Player PARRY (n={len(not_after_parry)})')
+    ax2.set_title(f'{boss_name} Hit Timing NOT After Player PARRY (n={len(not_after_parry)})')
     ax2.grid(True, alpha=0.3)
-    ax2.set_xlim(0, 5)
+    ax2.set_xlim(0, MAX_TIME_SECONDS)
 
     plt.tight_layout()
     plt.savefig('boss-hit-analysis.png', dpi=150)
