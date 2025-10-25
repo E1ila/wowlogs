@@ -111,7 +111,7 @@ module.exports = {
 
       let noHits = normalSwingTimes.length - filteredNormalSwingTimes.length + parrySwingTimes.length - filteredParrySwingTimes.length;
       let totalHits = normalSwingTimes.length + parrySwingTimes.length;
-      console.log(`Chance to not hit: ${Math.round(noHits / totalHits * 100)}%`);
+      console.log(`Chance to not swing: ${Math.round(noHits / totalHits * 100)}%`);
       console.log(`Chance to thrash: ${Math.round(thrashProc / totalHits * 100)}%`);
 
       const _totalHits = hitsNormal.length + hitsCritical.length + hitsCrushing.length;
