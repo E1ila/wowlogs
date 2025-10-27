@@ -1,0 +1,27 @@
+Total boss hits analyzed: 1928
+Hits after player PARRY: 53
+Hits NOT after player PARRY: 1875
+
+Plot saved as 'boss-hit-analysis.png'
+
+After PARRY stats:
+  Min: 0.734s
+  Max: 5.985s
+  Avg: 2.310s
+
+NOT after PARRY stats:
+  Min: 0.001s
+  Max: 6.516s
+  Avg: 1.489s
+
+--------------------------------------
+
+Normal swing time average: 2.4 sec
+Parry haste time average: 1.8 sec
+Chance to not swing: 10%
+Chance to thrash: 0%
+
+Hits: 1875
+Normal hit avg damage: 2144 73%
+Critical hit avg damage: 4585 5%
+Crushing hit avg damage: 3210 22%

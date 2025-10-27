@@ -3,7 +3,7 @@ echo
 
 BOSS="$1"
 echo Extracting boss hits
-wl $2 $3 $4 $5 $6 --pv --printraw --encounter $BOSS --source $BOSS --filter SWING_DAMAGE_LANDED,SWING_MISSED,SPELL_EXTRA_ATTACKS > ~/tmp/1
+wl $2 $3 $4 $5 $6 --pv --printraw --encounter "$BOSS" --source "$BOSS" --filter SWING_DAMAGE_LANDED,SWING_MISSED,SPELL_EXTRA_ATTACKS > ~/tmp/1
 echo Extracting parries on boss
-wl $2 $3 $4 $5 $6 --pv --miss PARRY --printraw --encounter $BOSS --target $BOSS --filter SWING_MISSED >> ~/tmp/1
+wl $2 $3 $4 $5 $6 --pv --miss PARRY --printraw --encounter "$BOSS" --target "$BOSS" --filter SWING_MISSED >> ~/tmp/1
 sort ~/tmp/1 | wl - --print --timediff > boss_hits.txt

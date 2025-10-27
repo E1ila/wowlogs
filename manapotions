@@ -1,0 +1,2 @@
+#!/bin/bash
+wl $LOG --encounter Sapphiron -P --filter SPELL_ENERGIZE | grep -vE "Unbridled Wrath|Shield Specialization|Life Tap|Bloodrage|Rejuvenation|Master of Elements|Head Rush|Relentless Strikes Effect|Magic Absorption|Relentless Strikes Effect|Adrenaline Rush"
