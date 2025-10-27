@@ -5,9 +5,9 @@ const c = require("../colors");
 const fs = require("fs");
 const path = require("path");
 
-const MEDIAN_FILTER_THRESHOLD = 2.5;
+const MEDIAN_FILTER_THRESHOLD = 2.5; // only used if MAX_SWING is 0
 const THRASH_PROC_THRESHOLD = 45 / 1000;
-const MAX_SWING = 3.2;
+const MAX_SWING = 5.2; // timeout for swing
 const MAX_VALID_DELTA = 10;
 
 let lastSwing = 0;
@@ -105,7 +105,7 @@ module.exports = {
       let filteredParrySwingTimes = parrySwingTimes.filter(t => t <= (MAX_SWING || parryMedian * MEDIAN_FILTER_THRESHOLD));
 
       let result =
-         `\nTotal encounters: ${Object.values(this.report.encounters)[0]}\nNormal swing time average: ${avg(filteredNormalSwingTimes)}\n` +
+         `Normal swing time average: ${avg(filteredNormalSwingTimes)}\n` +
          `Parry swing time average: ${avg(filteredParrySwingTimes)}\n`;
 
       let noHits = normalSwingTimes.length - filteredNormalSwingTimes.length + parrySwingTimes.length - filteredParrySwingTimes.length;
@@ -116,7 +116,7 @@ module.exports = {
       const _totalHits = hitsNormal.length + hitsCritical.length + hitsCrushing.length;
       // if (totalHits != _totalHits)
       //    console.error(`Total hits are different: ${totalHits}  ${_totalHits}`);
-      result += `\nHits: ${_totalHits}\n`;
+      result += `\nTotal encounters: ${Object.values(report.encounters)[0]}\nHits: ${_totalHits}\n`;
       result += `Normal hit avg damage: ${Math.round(avg(hitsNormal))} ${Math.round(hitsNormal.length/_totalHits*100)}%\n`;
       result += `Critical hit avg damage: ${Math.round(avg(hitsCritical))} ${Math.round(hitsCritical.length/_totalHits*100)}%\n`;
       result += `Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%\n`;

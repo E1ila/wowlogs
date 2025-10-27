@@ -1,3 +1,5 @@
+echo ** Don't use this, use boss-swing-timers instead **
+
 echo This script extracts all hits made by a boss, first param must be the boss name
 echo
 
