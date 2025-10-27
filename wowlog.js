@@ -15,7 +15,7 @@ function collect(value, previous) {
 
 async function processFile(filename, options, report, func, fileIndex) {
    if (fileIndex != undefined)
-      console.log(`====| Processing file ${filename}`);
+      console.log(`====| Processing file ${path.basename(filename)}`);
    report.files++;
    const log = new Log(filename, options, report, func);
    await log.process().catch(e => {

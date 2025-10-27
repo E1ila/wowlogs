@@ -2,6 +2,8 @@
 
 const Table = require('cli-table');
 const c = require("../colors");
+const fs = require("fs");
+const path = require("path");
 
 const MEDIAN_FILTER_THRESHOLD = 2.5;
 const THRASH_PROC_THRESHOLD = 45 / 1000;
@@ -60,17 +62,17 @@ module.exports = {
       }
 
       if (event.event === 'SWING_MISSED') {
-         if (event.target && event.target.name == options.params[0] && event.missType === 'PARRY') {
+         if (event.target && event.target.name === options.params[0] && event.missType === 'PARRY') {
             // parry the boss
             result.printPretty = true;
             lastParry = true;
-         } else if (event.source && event.source.name == options.params[0] && ['PARRY', 'DODGE', 'BLOCK', 'MISS'].indexOf(event.missType) != -1) {
+         } else if (event.source && event.source.name === options.params[0] && ['PARRY', 'DODGE', 'BLOCK', 'MISS'].indexOf(event.missType) !== -1) {
             // boss misses
             result.printPretty = true;
             bossSwing(0);
          }
       }
-      else if (event.event === 'SWING_DAMAGE_LANDED' && event.source && event.source.name == options.params[0]) {
+      else if (event.event === 'SWING_DAMAGE_LANDED' && event.source && event.source.name === options.params[0]) {
          // boss swing
          result.printPretty = true;
          bossSwing(1);
@@ -93,33 +95,32 @@ module.exports = {
       normalSwingTimes = normalSwingTimes.sort((a, b) => a-b);
       parrySwingTimes = parrySwingTimes.sort((a, b) => a-b);
 
-      console.log(`Normal swings:\n-------------------`);
-      normalSwingTimes.forEach(t => console.log(t));
-      console.log(`\nParry swings:\n-------------------`);
-      parrySwingTimes.forEach(t => console.log(t));
+      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.normalswings`), normalSwingTimes.join('\n'));
+      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.parryswings`), parrySwingTimes.join('\n'));
 
       let normalMedian = normalSwingTimes[Math.trunc(normalSwingTimes.length/2)];
       let parryMedian = parrySwingTimes[Math.trunc(parrySwingTimes.length/2)];
       // try to filter no hit procs
       let filteredNormalSwingTimes = normalSwingTimes.filter(t => t <= (MAX_SWING || normalMedian * MEDIAN_FILTER_THRESHOLD));
       let filteredParrySwingTimes = parrySwingTimes.filter(t => t <= (MAX_SWING || parryMedian * MEDIAN_FILTER_THRESHOLD));
-      let normalSum = filteredNormalSwingTimes.reduce((p, c) => p+c, 0);
-      let parrySum = filteredParrySwingTimes.reduce((p, c) => p+c, 0);
 
-      console.log(`\nNormal swing time average: ${avg(filteredNormalSwingTimes)}`);
-      console.log(`Parry swing time average: ${avg(filteredParrySwingTimes)}`);
+      let result =
+         `\nTotal encounters: ${Object.values(this.report.encounters)[0]}\nNormal swing time average: ${avg(filteredNormalSwingTimes)}\n` +
+         `Parry swing time average: ${avg(filteredParrySwingTimes)}\n`;
 
       let noHits = normalSwingTimes.length - filteredNormalSwingTimes.length + parrySwingTimes.length - filteredParrySwingTimes.length;
       let totalHits = normalSwingTimes.length + parrySwingTimes.length;
-      console.log(`Chance to not swing: ${Math.round(noHits / totalHits * 100)}%`);
-      console.log(`Chance to thrash: ${Math.round(thrashProc / totalHits * 100)}%`);
+      result += `Chance to not swing: ${Math.round(noHits / totalHits * 100)}%\n`;
+      result += `Chance to thrash: ${Math.round(thrashProc / totalHits * 100)}%\n`;
 
       const _totalHits = hitsNormal.length + hitsCritical.length + hitsCrushing.length;
       // if (totalHits != _totalHits)
       //    console.error(`Total hits are different: ${totalHits}  ${_totalHits}`);
-      console.log(`\nHits: ${_totalHits}`);
-      console.log(`Normal hit avg damage: ${Math.round(avg(hitsNormal))} ${Math.round(hitsNormal.length/_totalHits*100)}%`);
-      console.log(`Critical hit avg damage: ${Math.round(avg(hitsCritical))} ${Math.round(hitsCritical.length/_totalHits*100)}%`);
-      console.log(`Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%`);
+      result += `\nHits: ${_totalHits}\n`;
+      result += `Normal hit avg damage: ${Math.round(avg(hitsNormal))} ${Math.round(hitsNormal.length/_totalHits*100)}%\n`;
+      result += `Critical hit avg damage: ${Math.round(avg(hitsCritical))} ${Math.round(hitsCritical.length/_totalHits*100)}%\n`;
+      result += `Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%\n`;
+
+      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.txt`), result);
    },
 }
