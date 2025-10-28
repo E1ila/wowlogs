@@ -29,4 +29,4 @@ Combat log format: [WoWpedia COMBAT_LOG_EVENT](http://wow.gamepedia.com/COMBAT_L
 
 ## Credits
 
-Parse library based on https://github.com/JanKoppe/wow-log-parser
+Parse library based (but mostly modified) on https://github.com/JanKoppe/wow-log-parser
