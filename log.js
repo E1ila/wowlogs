@@ -98,6 +98,9 @@ module.exports = class Log {
                if (skipUntilLine > 0) {
                   console.log(`Using index: jumping to line ${skipUntilLine} (1000 lines before encounter)`);
                }
+            } else {
+               // Encounter not found in this file, skip processing
+               return;
             }
          }
       }

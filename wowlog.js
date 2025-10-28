@@ -40,14 +40,14 @@ async function processDir(logPath, options, report, func) {
    for (let file of filteredFiles) {
       if (options['progress']) {
          const percent = Math.floor((fileIndex / totalFiles) * 100);
-         const bar = '='.repeat(Math.floor(percent / 2)) + ' '.repeat(50 - Math.floor(percent / 2));
-         process.stderr.write(`\r[${bar}] ${percent}% (${fileIndex}/${totalFiles}) ${path.basename(file)}`);
+         const bar = '🁢'.repeat(Math.floor(percent / 2)) + ' '.repeat(50 - Math.floor(percent / 2));
+         process.stderr.write(`\r[${bar}] ${percent}% (${fileIndex}/${totalFiles}) ${path.basename(file)}${' '.repeat(10)}`);
       }
       await processFile(path.join(logPath, file), options, report, func, fileIndex, totalFiles);
       fileIndex++;
    }
    if (options['progress']) {
-      process.stderr.write(`\r[${'='.repeat(50)}] 100% (${totalFiles}/${totalFiles}) Complete\n`);
+      process.stderr.write(`\r[${'🁢'.repeat(50)}] 100% (${totalFiles}/${totalFiles}) Complete${' '.repeat(20)}\n`)
    }
 }
 
