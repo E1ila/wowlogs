@@ -1,5 +1,7 @@
 # Boss Swing Statistics Summary
 
+Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025. 
+
 ## Maexxna
 - **Normal swing time average:** 2.37s
 - **Parry swing time average:** 1.72s
