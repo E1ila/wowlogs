@@ -1,7 +1,5 @@
 'use strict';
 
-const Table = require('cli-table');
-const c = require("../colors");
 const fs = require("fs");
 const path = require("path");
 
@@ -9,6 +7,7 @@ const MEDIAN_FILTER_THRESHOLD = 2.5; // only used if MAX_SWING is 0
 const THRASH_PROC_THRESHOLD = 45 / 1000;
 const MAX_SWING = 5.2; // timeout for swing
 const MAX_VALID_DELTA = 10;
+const SAVE_PATH = [__dirname, '..', 'analysis-results', 'boss-swing'];
 
 let lastSwing = 0;
 let lastParry = false;
@@ -95,8 +94,10 @@ module.exports = {
       normalSwingTimes = normalSwingTimes.sort((a, b) => a-b);
       parrySwingTimes = parrySwingTimes.sort((a, b) => a-b);
 
-      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.normalswings`), normalSwingTimes.join('\n'));
-      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.parryswings`), parrySwingTimes.join('\n'));
+      const savedir = path.join(...SAVE_PATH);
+      const savefilebase = options.params[0].replaceAll(' ', '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      fs.writeFileSync(path.join(savedir, `${savefilebase}.normalswings`), normalSwingTimes.join('\n'));
+      fs.writeFileSync(path.join(savedir, `${savefilebase}.parryswings`), parrySwingTimes.join('\n'));
 
       let normalMedian = normalSwingTimes[Math.trunc(normalSwingTimes.length/2)];
       let parryMedian = parrySwingTimes[Math.trunc(parrySwingTimes.length/2)];
@@ -121,6 +122,6 @@ module.exports = {
       result += `Critical hit avg damage: ${Math.round(avg(hitsCritical))} ${Math.round(hitsCritical.length/_totalHits*100)}%\n`;
       result += `Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%\n`;
 
-      fs.writeFileSync(path.join(__dirname, '..', 'analysis-results', `${options.params[0].replaceAll(' ', '_')}.txt`), result);
+      fs.writeFileSync(path.join(savedir, `${savefilebase}.txt`), result);
    },
 }

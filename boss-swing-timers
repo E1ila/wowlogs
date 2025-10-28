@@ -1,8 +1,12 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]; then
-  >&2 echo "Usage: ./boss-swing-timers LOGS_DIR BOSS_NAME"
+if [ $# -lt 2 ]; then
+  >&2 echo "Usage: ./boss-swing-timers LOGS_DIR BOSS_NAME [ENCOUNTER]"
   exit 1
 fi
 
-wl $1 --func ParryHaste -p "$2" --encounter "$2" --ext txt --ff _Naxx_
+LOGS_DIR=$1
+BOSS_NAME=$2
+ENCOUNTER=${3:-$BOSS_NAME}
+
+wl "$LOGS_DIR" --func ParryHaste -p "$BOSS_NAME" --encounter "$ENCOUNTER" --ext txt --ff _Naxx_

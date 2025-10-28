@@ -29,7 +29,7 @@ def main():
     print(f"Average: {sum(numbers)/len(numbers):.3f}")
 
     plt.figure(figsize=(12, 6))
-    plt.hist(numbers, bins=50, edgecolor='black', alpha=0.7, color='blue')
+    plt.hist(numbers, bins=100, edgecolor='black', alpha=0.7, color='blue')
     plt.xlabel('Value')
     plt.ylabel('Frequency')
     plt.title(f'Histogram of {filename}')

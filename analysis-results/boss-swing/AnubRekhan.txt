@@ -1,0 +1,10 @@
+Normal swing time average: 1.956250302297474
+Parry swing time average: 1.5160871898055028
+Chance to not swing: 0%
+Chance to thrash: 24%
+
+Total encounters: 89
+Hits: 3433
+Normal hit avg damage: 1321 73%
+Critical hit avg damage: 2685 6%
+Crushing hit avg damage: 2010 21%
