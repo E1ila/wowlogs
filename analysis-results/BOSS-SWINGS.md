@@ -4,7 +4,7 @@
 - **Normal swing time average:** 2.37s
 - **Parry swing time average:** 1.72s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 13%
+- **Chance to double attack:** 13%
 - **Total encounters:** 95
 - **Hits:** 3,318
   - Normal hit avg damage: 2,034 (83%)
@@ -15,7 +15,7 @@
 - **Normal swing time average:** 1.96s
 - **Parry swing time average:** 1.52s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 24%
+- **Chance to double attack:** 24%
 - **Total encounters:** 89
 - **Hits:** 3,433
   - Normal hit avg damage: 1,321 (73%)
@@ -26,7 +26,7 @@
 - **Normal swing time average:** 2.45s
 - **Parry swing time average:** 1.88s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 97
 - **Hits:** 2,280
   - Normal hit avg damage: 2,286 (74%)
@@ -37,7 +37,7 @@
 - **Normal swing time average:** 2.51s
 - **Parry swing time average:** 1.95s
 - **Chance to not swing:** 3%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 85
 - **Hits:** 1,875
   - Normal hit avg damage: 2,144 (73%)
@@ -48,7 +48,7 @@
 - **Normal swing time average:** 2.52s
 - **Parry swing time average:** 2.01s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 113
 - **Hits:** 2,262
   - Normal hit avg damage: 1,987 (74%)
@@ -59,7 +59,7 @@
 - **Normal swing time average:** 1.43s
 - **Parry swing time average:** 1.13s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 99
 - **Hits:** 7,717
   - Normal hit avg damage: 1,441 (99%)
@@ -70,7 +70,7 @@
 - **Normal swing time average:** 3.44s
 - **Parry swing time average:** 2.31s
 - **Chance to not swing:** 2%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 180
 - **Hits:** 4,162
   - Normal hit avg damage: 4,277 (76%)
@@ -81,7 +81,7 @@
 - **Normal swing time average:** 2.47s
 - **Parry swing time average:** 2.32s
 - **Chance to not swing:** 18%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 50
 - **Hits:** 327
   - Normal hit avg damage: 1,108 (74%)
@@ -92,7 +92,7 @@
 - **Normal swing time average:** 0.81s
 - **Parry swing time average:** 0.65s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 42
 - **Hits:** 11,234
   - Normal hit avg damage: 2,027 (98%)
@@ -105,7 +105,7 @@
 - **Normal swing time average:** 2.62s
 - **Parry swing time average:** 2.17s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 60
 - **Hits:** 8,503
   - Normal hit avg damage: 1,255 (79%)
@@ -116,7 +116,7 @@
 - **Normal swing time average:** 2.51s
 - **Parry swing time average:** 1.85s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 60
 - **Hits:** 2,222
   - Normal hit avg damage: 1,110 (74%)
@@ -127,7 +127,7 @@
 - **Normal swing time average:** 2.62s
 - **Parry swing time average:** 2.09s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 111
 - **Hits:** 6,421
   - Normal hit avg damage: 1,347 (78%)
@@ -138,7 +138,7 @@
 - **Normal swing time average:** 1.56s
 - **Parry swing time average:** 1.24s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 111
 - **Hits:** 7,548
   - Normal hit avg damage: 696 (81%)
@@ -149,7 +149,7 @@
 - **Normal swing time average:** 2.47s
 - **Parry swing time average:** 1.81s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 85
 - **Hits:** 2,262
   - Normal hit avg damage: 1,515 (70%)
@@ -160,7 +160,7 @@
 - **Normal swing time average:** 1.25s
 - **Parry swing time average:** 1.19s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 12%
+- **Chance to double attack:** 12%
 - **Total encounters:** 86
 - **Hits:** 3,793
   - Normal hit avg damage: 1,624 (74%)
@@ -171,7 +171,7 @@
 - **Normal swing time average:** 1.47s
 - **Parry swing time average:** 1.26s
 - **Chance to not swing:** 1%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 81
 - **Hits:** 4,173
   - Normal hit avg damage: 1,789 (72%)
@@ -182,7 +182,7 @@
 - **Normal swing time average:** 2.20s
 - **Parry swing time average:** 1.76s
 - **Chance to not swing:** 0%
-- **Chance to thrash:** 11%
+- **Chance to double attack:** 11%
 - **Total encounters:** 110
 - **Hits:** 4,192
   - Normal hit avg damage: 2,040 (79%)
@@ -193,7 +193,7 @@
 - **Normal swing time average:** 2.27s
 - **Parry swing time average:** 1.96s
 - **Chance to not swing:** 3%
-- **Chance to thrash:** 0%
+- **Chance to double attack:** 0%
 - **Total encounters:** 72
 - **Hits:** 4,220
   - Normal hit avg damage: 2,243 (75%)
@@ -215,7 +215,7 @@
 3. **Kel'Thuzad** - 2,243 damage
 
 ### Thrashing Bosses
-- **Anub'Rekhan** - 24% thrash chance
-- **Maexxna** - 13% thrash chance
-- **Gluth** - 12% thrash chance
-- **Sapphiron** - 11% thrash chance
+- **Anub'Rekhan** - 24% double attack chance
+- **Maexxna** - 13% double attack chance
+- **Gluth** - 12% double attack chance
+- **Sapphiron** - 11% double attack chance
