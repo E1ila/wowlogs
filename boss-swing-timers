@@ -9,4 +9,4 @@ LOGS_DIR=$1
 BOSS_NAME=$2
 ENCOUNTER=${3:-$BOSS_NAME}
 
-wl "$LOGS_DIR" --func ParryHaste -p "$BOSS_NAME" --encounter "$ENCOUNTER" --ext txt --ff _Naxx_
+wl "$LOGS_DIR" --func ParryHaste -p "$BOSS_NAME" --encounter "$ENCOUNTER" --ext txt --ff _Naxx_ --progress

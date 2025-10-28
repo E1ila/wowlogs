@@ -120,7 +120,10 @@ module.exports = {
       result += `\nTotal encounters: ${Object.values(report.encounters)[0]}\nHits: ${_totalHits}\n`;
       result += `Normal hit avg damage: ${Math.round(avg(hitsNormal))} ${Math.round(hitsNormal.length/_totalHits*100)}%\n`;
       result += `Critical hit avg damage: ${Math.round(avg(hitsCritical))} ${Math.round(hitsCritical.length/_totalHits*100)}%\n`;
-      result += `Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%\n`;
+      if (hitsCrushing.length)
+         result += `Crushing hit avg damage: ${Math.round(avg(hitsCrushing))} ${Math.round(hitsCrushing.length/_totalHits*100)}%\n`;
+      else
+         result += `No crushing blows.`
 
       fs.writeFileSync(path.join(savedir, `${savefilebase}.txt`), result);
    },

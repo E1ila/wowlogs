@@ -7,4 +7,4 @@ Total encounters: 42
 Hits: 11234
 Normal hit avg damage: 2027 98%
 Critical hit avg damage: 4564 2%
-Crushing hit avg damage: NaN 0%
+No crushing blows.

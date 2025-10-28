@@ -13,14 +13,42 @@ function collect(value, previous) {
    return previous.concat([value]);
 }
 
-async function processFile(filename, options, report, func, fileIndex) {
-   if (fileIndex != undefined)
+async function processFile(filename, options, report, func, fileIndex, totalFiles) {
+   if (fileIndex != undefined && !options['progress'])
       console.log(`====| Processing file ${path.basename(filename)}`);
    report.files++;
    const log = new Log(filename, options, report, func);
    await log.process().catch(e => {
       report.files--;
    });
+}
+
+async function processDir(logPath, options, report, func) {
+   options['dirscan'] = true;
+   const files = fs.readdirSync(logPath);
+   const filteredFiles = files.filter(file => {
+      if (options['ext'] && !file.endsWith('.' + options['ext']))
+         return false;
+      if (options['prefix'] && !file.startsWith(options['prefix']))
+         return false;
+      if (options['ff'] && !file.includes(options['ff']))
+         return false;
+      return true;
+   });
+   const totalFiles = filteredFiles.length;
+   let fileIndex = 0;
+   for (let file of filteredFiles) {
+      if (options['progress']) {
+         const percent = Math.floor((fileIndex / totalFiles) * 100);
+         const bar = '='.repeat(Math.floor(percent / 2)) + ' '.repeat(50 - Math.floor(percent / 2));
+         process.stderr.write(`\r[${bar}] ${percent}% (${fileIndex}/${totalFiles}) ${path.basename(file)}`);
+      }
+      await processFile(path.join(logPath, file), options, report, func, fileIndex, totalFiles);
+      fileIndex++;
+   }
+   if (options['progress']) {
+      process.stderr.write(`\r[${'='.repeat(50)}] 100% (${totalFiles}/${totalFiles}) Complete\n`);
+   }
 }
 
 async function processStdin(options, report, func) {
@@ -61,6 +89,7 @@ program
    .option('--timediff', 'Measure time difference between events')
    .option('-p, --params <param>', 'Extra parameters passed to custom function', collect, [])
    .option('--pv', 'Print version (first line of log file)')
+   .option('--progress', 'Show progress bar during directory scan')
    .option('-v, --verbose', 'Print detailed debug information')
    .option('--v114', 'Use v1.14 log version as default')
    .action(async (logPath, options) => {
@@ -87,20 +116,9 @@ program
       if (logPath === '-')
          await processStdin(options, report, func);
       else if (fs.existsSync(logPath)) {
-         if (fs.lstatSync(logPath).isDirectory()) {
-            options['dirscan'] = true;
-            const files = fs.readdirSync(logPath);
-            let fileIndex = 0;
-            for (let file of files) {
-               if (options['ext'] && !file.endsWith('.' + options['ext']))
-                  continue;
-               if (options['prefix'] && !file.startsWith(options['prefix']))
-                  continue;
-               if (options['ff'] && !file.includes(options['ff']))
-                  continue;
-               await processFile(path.join(logPath, file), options, report, func, fileIndex++);
-            }
-         } else
+         if (fs.lstatSync(logPath).isDirectory())
+            await processDir(logPath, options, report, func);
+         else
             await processFile(logPath, options, report, func);
       } else {
          // try to parse logPath - should be a line from the combat log
