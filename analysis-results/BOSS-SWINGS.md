@@ -6,7 +6,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Maexxna.normalswings.png) | [Parry Swings Plot](boss-swing/Maexxna.parryswings.png)
 
 - **Normal swing time average:** 2.37s
-- **Parry swing time average:** 1.72s
+- **Parry swing time average:** 1.72s (27% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 13%
 - **Total encounters:** 95
@@ -19,7 +19,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/AnubRekhan.normalswings.png) | [Parry Swings Plot](boss-swing/AnubRekhan.parryswings.png)
 
 - **Normal swing time average:** 1.96s
-- **Parry swing time average:** 1.52s
+- **Parry swing time average:** 1.52s (22% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 24%
 - **Total encounters:** 89
@@ -32,7 +32,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Grand_Widow_Faerlina.normalswings.png) | [Parry Swings Plot](boss-swing/Grand_Widow_Faerlina.parryswings.png)
 
 - **Normal swing time average:** 2.45s
-- **Parry swing time average:** 1.88s
+- **Parry swing time average:** 1.88s (23% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 97
@@ -45,7 +45,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Noth_the_Plaguebringer.normalswings.png) | [Parry Swings Plot](boss-swing/Noth_the_Plaguebringer.parryswings.png)
 
 - **Normal swing time average:** 2.51s
-- **Parry swing time average:** 1.95s
+- **Parry swing time average:** 1.95s (22% faster)
 - **Chance to not swing:** 3%
 - **Chance to double attack:** 0%
 - **Total encounters:** 85
@@ -58,7 +58,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Heigan_the_Unclean.normalswings.png) | [Parry Swings Plot](boss-swing/Heigan_the_Unclean.parryswings.png)
 
 - **Normal swing time average:** 2.52s
-- **Parry swing time average:** 2.01s
+- **Parry swing time average:** 2.01s (20% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 113
@@ -71,7 +71,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Loatheb.normalswings.png) | [Parry Swings Plot](boss-swing/Loatheb.parryswings.png)
 
 - **Normal swing time average:** 1.43s
-- **Parry swing time average:** 1.13s
+- **Parry swing time average:** 1.13s (21% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 0%
 - **Total encounters:** 99
@@ -84,7 +84,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Instructor_Razuvious.normalswings.png) | [Parry Swings Plot](boss-swing/Instructor_Razuvious.parryswings.png)
 
 - **Normal swing time average:** 3.44s
-- **Parry swing time average:** 2.31s
+- **Parry swing time average:** 2.31s (33% faster)
 - **Chance to not swing:** 2%
 - **Chance to double attack:** 0%
 - **Total encounters:** 180
@@ -97,7 +97,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Gothik_the_Harvester.normalswings.png) | [Parry Swings Plot](boss-swing/Gothik_the_Harvester.parryswings.png)
 
 - **Normal swing time average:** 2.47s
-- **Parry swing time average:** 2.32s
+- **Parry swing time average:** 2.32s (6% faster)
 - **Chance to not swing:** 18%
 - **Chance to double attack:** 0%
 - **Total encounters:** 50
@@ -110,7 +110,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Patchwerk.normalswings.png) | [Parry Swings Plot](boss-swing/Patchwerk.parryswings.png)
 
 - **Normal swing time average:** 0.81s
-- **Parry swing time average:** 0.65s
+- **Parry swing time average:** 0.65s (20% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 0%
 - **Total encounters:** 42
@@ -125,7 +125,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Sir_Zeliek.normalswings.png) | [Parry Swings Plot](boss-swing/Sir_Zeliek.parryswings.png)
 
 - **Normal swing time average:** 2.62s
-- **Parry swing time average:** 2.17s
+- **Parry swing time average:** 2.17s (17% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 60
@@ -138,7 +138,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Thane_Korthazz.normalswings.png) | [Parry Swings Plot](boss-swing/Thane_Korthazz.parryswings.png)
 
 - **Normal swing time average:** 2.51s
-- **Parry swing time average:** 1.85s
+- **Parry swing time average:** 1.85s (26% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 60
@@ -151,7 +151,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Lady_Blaumeux.normalswings.png) | [Parry Swings Plot](boss-swing/Lady_Blaumeux.parryswings.png)
 
 - **Normal swing time average:** 2.62s
-- **Parry swing time average:** 2.09s
+- **Parry swing time average:** 2.09s (20% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 111
@@ -164,7 +164,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Highlord_Mograine.normalswings.png) | [Parry Swings Plot](boss-swing/Highlord_Mograine.parryswings.png)
 
 - **Normal swing time average:** 1.56s
-- **Parry swing time average:** 1.24s
+- **Parry swing time average:** 1.24s (21% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 111
@@ -177,7 +177,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Grobbulus.normalswings.png) | [Parry Swings Plot](boss-swing/Grobbulus.parryswings.png)
 
 - **Normal swing time average:** 2.47s
-- **Parry swing time average:** 1.81s
+- **Parry swing time average:** 1.81s (27% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 0%
 - **Total encounters:** 85
@@ -190,7 +190,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Gluth.normalswings.png) | [Parry Swings Plot](boss-swing/Gluth.parryswings.png)
 
 - **Normal swing time average:** 1.25s
-- **Parry swing time average:** 1.19s
+- **Parry swing time average:** 1.19s (5% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 12%
 - **Total encounters:** 86
@@ -203,7 +203,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Thaddius.normalswings.png) | [Parry Swings Plot](boss-swing/Thaddius.parryswings.png)
 
 - **Normal swing time average:** 1.47s
-- **Parry swing time average:** 1.26s
+- **Parry swing time average:** 1.26s (14% faster)
 - **Chance to not swing:** 1%
 - **Chance to double attack:** 0%
 - **Total encounters:** 81
@@ -216,7 +216,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/Sapphiron.normalswings.png) | [Parry Swings Plot](boss-swing/Sapphiron.parryswings.png)
 
 - **Normal swing time average:** 2.20s
-- **Parry swing time average:** 1.76s
+- **Parry swing time average:** 1.76s (20% faster)
 - **Chance to not swing:** 0%
 - **Chance to double attack:** 11%
 - **Total encounters:** 110
@@ -229,7 +229,7 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
 [Normal Swings Plot](boss-swing/KelThuzad.normalswings.png) | [Parry Swings Plot](boss-swing/KelThuzad.parryswings.png)
 
 - **Normal swing time average:** 2.27s
-- **Parry swing time average:** 1.96s
+- **Parry swing time average:** 1.96s (14% faster)
 - **Chance to not swing:** 3%
 - **Chance to double attack:** 0%
 - **Total encounters:** 72
