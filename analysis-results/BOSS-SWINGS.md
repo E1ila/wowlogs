@@ -199,6 +199,32 @@ Derived from World of Warcraft Classic (Era) logs, between 2023 and 2025; Genera
   - Critical hit avg damage: 3,238 (4%)
   - Crushing hit avg damage: 2,523 (22%)
 
+## Stalagg
+[Normal Swings Plot](boss-swing/Stalagg.normalswings.png) | [Parry Swings Plot](boss-swing/Stalagg.parryswings.png)
+
+- **Normal swing time average:** 1.50s
+- **Parry swing time average:** 1.59s (6% slower)
+- **Chance to not swing:** 0%
+- **Chance to double attack:** 0%
+- **Total encounters:** 82
+- **Hits:** 1,904
+  - Normal hit avg damage: 2,146 (77%)
+  - Critical hit avg damage: 4,570 (4%)
+  - Crushing hit avg damage: 3,265 (20%)
+
+## Feugen
+[Normal Swings Plot](boss-swing/Feugen.normalswings.png) | [Parry Swings Plot](boss-swing/Feugen.parryswings.png)
+
+- **Normal swing time average:** 2.47s
+- **Parry swing time average:** 1.80s (27% faster)
+- **Chance to not swing:** 1%
+- **Chance to double attack:** 0%
+- **Total encounters:** 82
+- **Hits:** 1,366
+  - Normal hit avg damage: 1,952 (75%)
+  - Critical hit avg damage: 4,051 (6%)
+  - Crushing hit avg damage: 2,915 (19%)
+
 ## Thaddius
 [Normal Swings Plot](boss-swing/Thaddius.normalswings.png) | [Parry Swings Plot](boss-swing/Thaddius.parryswings.png)
 
